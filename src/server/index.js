@@ -52,6 +52,28 @@ app.get('/', function(req, res) {
 		res.redirect('/ui/');
 		});
 
+
+app.get('/api/mision', function(req,res){
+	res.json([  //TODO: leer misiones del directorio Store
+		{
+		  childKey: 0,
+		  image: '/images/wireframe/image.png',
+		  header: 'arreglar tablero X',
+		  description: 'Description',
+		  meta: 'Metadata',
+		  status: 'terminado',
+		},
+		{
+		  childKey: 1,
+		  //image: '/images/wireframe/image.png',
+		  header: 'Limpiar compresor B',
+		  description: 'Description',
+		  meta: 'Metadata',
+		  extra: 'Extra',
+		  status: 'esperando',
+		},
+	  ]);
+})
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT, function() {
 	var if2addr= net_interfaces();

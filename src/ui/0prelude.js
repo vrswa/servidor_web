@@ -1,7 +1,7 @@
 //INFO: vars globales, inicializa, etc.
 
 var { Component, h, render } = window.preact;
-var { Header, Icon, Image, Menu, Segment, Sidebar, Button, Input, List }= window.semanticUIReact;
+var { Header, Icon, Image, Menu, Segment, Sidebar, Button, Input, List, Item }= window.semanticUIReact;
 
 render_str= preactRenderToString;
 
