@@ -27,8 +27,7 @@
     "type": "git",
     "url": "git://github.com/mauriciocap/semantic_tpl.git"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "dependencies": {
     "canvas": "^2.4.1",
     "cross-fetch": "^3.0.1",
@@ -73,7 +72,7 @@
     "preact-router": "^2.6.1",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.87.1",
- 		"express": "^4.16.4",
+    "express": "^4.16.4",
     "semantic-ui-forest-themes": "^1.0.3"
   }
 }
