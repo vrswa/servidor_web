@@ -19,7 +19,7 @@
     "test-server": "karma --no-browsers -port 8080 start ./spec/karma.conf.js --cov",
     "test-nolint": "karma start ./spec/karma.conf.js --cov",
     "code-sloc": "npx sloc --details --format cli-table src/ > doc/ref/sloc.txt",
-    "build": "echo IMPLEMENTAR",
+    "build": "%APPDATA%/npm/pkg --out-path x_out/exe -t node10-macos,node10-win . ",
     "release": "echo IMPLEMENTAR",
     "uglify": "echo IMPLEMENTAR"
   },
