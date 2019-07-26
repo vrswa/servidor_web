@@ -1,5 +1,5 @@
 function misiones_P() {
-  return fetch('/api/mision').then(res => res.json())
+  return fetch('/mission').then(res => res.json())
 }
 
 
@@ -18,7 +18,9 @@ function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca 
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
 }
-
+function mostrarMasInfo (mision) {
+  console.log("te saludo desde la mision: ", mision);
+}
 App= MkUiComponent(function App(my) {
   XAPP = my;//A:para debug accesible desde la consola
   my.onCfg = onCfg;
@@ -28,14 +30,35 @@ App= MkUiComponent(function App(my) {
     misiones_P().then( res => my.setState({misiones: res}));
     //A: la primera vez que se dibuja, busco las misiones y las guardo en mi state, se redibuja
   }
-  my.render= function (props, state) {
-    if (state.misiones){
-      state.misiones.map(estaMision => { estaMision.extra= h('div',{},
-        h(Icon,{name: 'sign language', color: 'green'}),
-        h(Button,{},'ver detalle')
-      ) }); 
-    }
   
+  my.render= function (props, state) {
+    var misionesItems;
+    if (state.misiones){
+      /*
+		{
+		  childKey: 0,
+		  image: '../mision/misionA/misionA3.jpg',
+		  header: 'arreglar tablero X',
+		  description: 'Description',
+		  meta: 'Metadata',
+		  status: 'terminado',
+		},
+    */
+   
+      misionesItems= state.misiones.map(estaMision => {
+        return {
+          header: estaMision.header,
+          description: estaMision.description,
+          meta: estaMision.meta,
+          extra: h('div',{},
+            h(Icon,{name: 'sign language', color: 'green'}),//TODO cambiar segun status
+            h(Button,{onClick: () => mostrarMasInfo(estaMision)},'ver detalle')
+          ),
+        }
+      }); 
+    }
+    //A: converir de expediente a lo que necesita semantic ui
+
     //U: esta funcion dibuja la pantalla, podes usar elementos de html (ej. 'div') o Semantic UI (ej. Button)
     //el formato es h(elemento, propiedades, contenido1, contenido2, ...)
     return (
@@ -50,8 +73,8 @@ App= MkUiComponent(function App(my) {
           )
 				),
         
-        my.state.misiones ? 
-         h(Item.Group, {items: my.state.misiones},) :
+        misionesItems ? 
+         h(Item.Group, {items: misionesItems},) :
          h('div',{},'cargando')
 		));
   }
