@@ -1,5 +1,5 @@
 function misiones_P() {
-  return fetch('/api/mision').then(res => res.json())
+  return fetch('/api/mission').then(res => res.json())
 }
 
 
@@ -18,7 +18,9 @@ function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca 
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
 }
-
+function mostrarMasInfo (mision) {
+  console.log("te saludo desde la mision: ", mision);
+}
 App= MkUiComponent(function App(my) {
   XAPP = my;//A:para debug accesible desde la consola
   my.onCfg = onCfg;
@@ -28,36 +30,51 @@ App= MkUiComponent(function App(my) {
     misiones_P().then( res => my.setState({misiones: res}));
     //A: la primera vez que se dibuja, busco las misiones y las guardo en mi state, se redibuja
   }
-  my.render= function (props, state) {
-    if (state.misiones){
-      state.misiones.map(estaMision => { estaMision.extra= h('div',{},
-        h(Icon,{name: 'sign language', color: 'green'}),
-        h(Button,{},'ver detalle')
-      ) }); 
-    }
   
+  my.render= function (props, state) {
+    var misionesItems;
+    if (state.misiones){
+      /*
+		{
+		  childKey: 0,
+		  image: '../mision/misionA/misionA3.jpg',
+		  header: 'arreglar tablero X',
+		  description: 'Description',
+		  meta: 'Metadata',
+		  status: 'terminado',
+		},
+    */
+   
+      misionesItems= state.misiones.map(estaMision => {
+        return {
+          header: estaMision.header,
+          description: estaMision.description,
+          meta: estaMision.meta,
+          extra: h('div',{},
+            h(Icon,{name: 'sign language', color: 'green'}),//TODO cambiar segun status
+            h(Button,{onClick: () => mostrarMasInfo(estaMision)},'ver detalle')
+          ),
+        }
+      }); 
+    }
+    //A: converir de expediente a lo que necesita semantic ui
+
     //U: esta funcion dibuja la pantalla, podes usar elementos de html (ej. 'div') o Semantic UI (ej. Button)
     //el formato es h(elemento, propiedades, contenido1, contenido2, ...)
     return (
 			h('div', {id:'app'},
-        h(Button,{onClick: () => onCfg(my), style: {float: 'right'}, basic: true, color: 'gray'},'Cfg'),
-				h('div',{style: {display: state.wantsCfg ? 'block' : 'none'}},
-          //A: esta div se muestra solo si el my.state.wantsCfg es true
-					h(Input,{ref: (e) => (my.nombre_el=e), value: my.nombre, placeholder: 'Tu nombre'}),
-          h('div',{},
-             Estilos.map(k => 
-                h(Button,{basic: true, onClick: () => setTheme(k)},k))
-          )
-				),
-        
-        my.state.misiones ? 
-         h(Item.Group, {items: my.state.misiones},) :
-         h('div',{},'cargando')
+        misionesItems ? 
+					misionesItems.length>0 ?
+         		h(Item.Group, {items: misionesItems},) 
+						:
+						h('div',{},'No hay ninguna misión todavía')
+					:
+        	 h('div',{},'cargando')
 		));
   }
 });
 
-setTheme('readable');
+setTheme('cyborg');
 render(h(App), document.body);
 //A: estemos en cordova o web, llama a la inicializacion
 
