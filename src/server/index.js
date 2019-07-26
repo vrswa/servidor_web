@@ -1,5 +1,7 @@
 //INFO: servidor, estandar, separar en modulos
 
+CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var os = require('os'); //A: para interfases
@@ -75,7 +77,7 @@ app.get('/api/mision', function(req,res){
 	  ]);
 })
 //SEE: listen for requests :)
-var listener = app.listen(process.env.PORT, function() {
+var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
 	var k;
 	for (k in if2addr) {
