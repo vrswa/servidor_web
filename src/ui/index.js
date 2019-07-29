@@ -62,14 +62,15 @@ App= MkUiComponent(function App(my) {
     //U: esta funcion dibuja la pantalla, podes usar elementos de html (ej. 'div') o Semantic UI (ej. Button)
     //el formato es h(elemento, propiedades, contenido1, contenido2, ...)
     return (
-			h('div', {id:'app'},
+      h(Container,{},
+        h('div', {id:'app'},
         misionesItems ? 
 					misionesItems.length>0 ?
-         		h(Item.Group, {items: misionesItems},) 
-						:
+         		h(Item.Group, {items: misionesItems,},) 
+            :
 						h('div',{},'No hay ninguna misión todavía')
 					:
-        	 h('div',{},'cargando')
+        	 h('div',{},'cargando'))
 		));
   }
 });
