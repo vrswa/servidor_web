@@ -1,6 +1,7 @@
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
 CfgDbBaseDir = 'SmartWorkAR/db/missions'; //A: las misiones que llegan se escriben aqui
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
+
 //----------------------------------------------------------
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -8,7 +9,7 @@ var os = require('os'); //A: para interfases
 var fs = require('fs');
 var fileUpload = require('express-fileupload');
 var path = require('path');
-
+var crypto = require('crypto');
 //------------------------------------------------------------------
 //S: util
 function net_interfaces() { //U: conseguir las interfases de red
@@ -88,6 +89,28 @@ function leerJson(ruta){
   console.log(rutaCarpeta("/t_rutaCarpeta_root_MAL","index.json",true)) //A: no pasa /
   */
 
+//U: recibe la ruta de un archivo y devuelve un hash con el md5
+//VER: https://gist.github.com/GuillermoPena/9233069
+ function fileHash(filename, algorithm = 'md5') {
+	return new Promise((resolve, reject) => {
+	  // Algorithm depends on availability of OpenSSL on platform
+	  // Another algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...
+	  let shasum = crypto.createHash(algorithm);
+	  try {
+		let s = fs.ReadStream(filename)
+		s.on('data', function (data) {
+		  shasum.update(data)
+		})
+		// making digest
+		s.on('end', function () {
+		  const hash = shasum.digest('hex')
+		  return resolve(hash);
+		})
+	  } catch (error) {
+		return reject('calc fail');
+	  }
+	});
+  }
 //--------------------------------------------------------------------
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -136,18 +159,22 @@ app.get('/api/mission',(req,res) => {
 //U: curl -F 'file=@\Users\VRM\Pictures\leon.jpg' http://localhost:8888/api/mission/misionDaniel
 app.post('/api/mission/:missionId',(req,res) => {
 	try{
-	  if(!req.files){  return res.status(400); }
-	  //A: sino me mandaron nigun file devolvi 400
-	  var archivo = req.files.file;
-   
-	  var rutaArchivo = rutaCarpeta(req.params.missionId, archivo.name,true);
-	  //A: ruta carpeta limpia path (que no tenga .. exe js )
-	  //A : el tamaño maximo se controla con CfgUploadSzMax
-	  console.log("mission upload: " + rutaArchivo + " " + archivo.size);
-	  archivo.mv( rutaArchivo, err => {
+		if(!req.files){  return res.status(400); }
+		//A: sino me mandaron nigun file devolvi 400
+		var archivo = req.files.file;
+		var rutaArchivo = rutaCarpeta(req.params.missionId, archivo.name,true);
+		//A: ruta carpeta limpia path (que no tenga .. exe js )
+		//A : el tamaño maximo se controla con CfgUploadSzMax
+	
+		archivo.mv( rutaArchivo, err => {
 			if (err) { return res.send(err); }
+			
+			//A: mostrar hash del archivo
+			fileHash(rutaArchivo).then((hash) => { 
+				console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
+			});
 			return res.status(200).send('OK ' + archivo.size); //TODO: enviar tambien HASH
-	  });
+		});
 	}catch (err) {
 	  res.status(500).send(err);
 	}
