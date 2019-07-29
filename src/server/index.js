@@ -136,6 +136,14 @@ app.get('/', function(req, res) {
 		res.redirect('/ui/');
 });
 
+
+//U: mediante GET se piden los index.json de todas las misiones
+app.get('/api/isSmartWorkAR',(req,res) => {
+	var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+	console.log("CLIENT AT " + ip);
+	return res.status(200).send("YES");
+});
+
 //U: mediante GET se piden los index.json de todas las misiones
 app.get('/api/mission',(req,res) => {
 	var r = new Array();
