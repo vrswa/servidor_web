@@ -12,14 +12,23 @@ function setTheme(t) {
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
 
-//TODO: mezclar las respuestas al azar
-//TODO: mezclar las preguntas con algun criterio que ayude a memorizar?
+
 function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca adentro
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
 }
 function mostrarMasInfo (mision) {
   console.log("te saludo desde la mision: ", mision);
+}
+
+//U: pone el color para tres estados posibles "sin iniciar, iniciado, completado"
+function colorMision( status){
+  if (status === 'sin iniciar')
+    return 'red';
+  else if (status === 'iniciado'){
+    return 'yellow'
+  }
+  return 'green';
 }
 App= MkUiComponent(function App(my) {
   XAPP = my;//A:para debug accesible desde la consola
@@ -50,8 +59,10 @@ App= MkUiComponent(function App(my) {
           header: estaMision.header,
           description: estaMision.description,
           meta: estaMision.meta,
+          status: estaMision.status,
           extra: h('div',{},
-            h(Icon,{name: 'sign language', color: 'green'}),//TODO cambiar segun status
+            h('p',null,estaMision.status),
+            h(Icon,{name: 'sign language', color: colorMision(estaMision.status)}),//TODO cambiar segun status
             h(Button,{onClick: () => mostrarMasInfo(estaMision)},'ver detalle')
           ),
         }
@@ -75,7 +86,7 @@ App= MkUiComponent(function App(my) {
   }
 });
 
-setTheme('cyborg');
+setTheme('chubby');  //cyborg
 render(h(App), document.body);
 //A: estemos en cordova o web, llama a la inicializacion
 
