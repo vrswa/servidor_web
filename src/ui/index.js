@@ -24,6 +24,7 @@ async function mostrarMasInfo (my, mision) {
   //archivos_P(mision.nombreCarpeta).then(res => console.log(res[0], res[1], res[2]));
   vectorDeNombres = await archivos_P(mision.nombreCarpeta);
   my.setState({nombreArchivos: vectorDeNombres});
+  my.setState({nombreCarpeta: mision.nombreCarpeta});
 }
 
 //U: pone el color para tres estados posibles "sin iniciar, iniciado, completado"
@@ -49,8 +50,8 @@ App= MkUiComponent(function App(my) {
   
   my.render= function (props, state) {
     var misionesItems;
-    var nombreArchivo;
-    nombreArchivos = state.nombreArchivos;
+    var nombreCarpeta = state.nombreCarpeta;
+    var nombreArchivos = state.nombreArchivos;
     if (state.misiones){
       /*
 		{
@@ -94,11 +95,15 @@ App= MkUiComponent(function App(my) {
         h('div', {id:'archivos', style: {display: state.wantsCfg ? 'block' : 'none' }},
         nombreArchivos ? 
 					nombreArchivos.length>0 ?(
-            nombreArchivos.map( k => 
-              h('a',{href: "https://www.google.es/"},k))
+            h('div',{},
+            h(Button,{onClick: () =>onCfg(my)},"volver"),
+            nombreArchivos.map( nombreArchivo =>
+              h('a',{href: `http://localhost:8080/api/mission/${nombreCarpeta}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
             )
+            )
+          )
             :
-						h('div',{},'No hay ninguna misión todavía')
+						h('div',{},'No hay ninguna archivo todavía')
 					:
            h('div',{},'cargando')),
         //-----------------------------------------------------
