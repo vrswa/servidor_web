@@ -40,6 +40,7 @@ function colorMision( status){
 
 //U: con el input del forma crea y envia un json con la iformacion de la mision
 function crearMision(my) {
+  //my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario animacion cargando
   var data = {
     "header": my.state.nombre,
     "description": my.state.descripcion,
@@ -49,11 +50,19 @@ function crearMision(my) {
   }
   //TODO: sin funciona hacerlo funcion
   var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
-  console.log(url);
   var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
   var formData = new FormData();
   formData.append("index",index,"index.json");
   var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+        if(request.responseText == 'ok'|| 'OK'){
+          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario quitar animacion cargando
+          console.log("ok ");
+        }
+    }
+  }
+
   request.open("POST", url);
   request.send(formData)
   //--------------------------------------------------------------------------------------------
@@ -61,8 +70,10 @@ function crearMision(my) {
 App= MkUiComponent(function App(my) {
   XAPP = my;//A:para debug accesible desde la consola
   my.onCfg = onCfg;
+  
   my.colorMision = colorMision;
-  //my.crearMision = crearMision;
+  my.state.missionUploadOk = true;
+  
   //VER: https://preactjs.com/guide/api-reference
   my.componentDidMount = function () {
     misiones_P().then( res => my.setState({misiones: res}));
@@ -117,10 +128,10 @@ App= MkUiComponent(function App(my) {
         nombreArchivos ? 
 					nombreArchivos.length>0 ?(
             h('div',{},
-            h(Button,{onClick: () =>onCfg(my)},"volver"),
-            nombreArchivos.map( nombreArchivo =>
-              h('a',{href: `http://localhost:8080/api/mission/${nombreCarpeta}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
-            )
+              h(Button,{onClick: () =>onCfg(my)},"volver"),
+              nombreArchivos.map( nombreArchivo =>
+                h('a',{href: `http://localhost:8080/api/mission/${nombreCarpeta}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
+              )
             )
           )
             :
@@ -131,7 +142,7 @@ App= MkUiComponent(function App(my) {
         //-----------------------------------------------------
         //U: FORMULARIO para cargar nueva mision
         h('h2',{},'formulario de nueva mision'),
-        h(Form,{},
+        h(Form,{success: !state.missionUploadOk},
           h(Form.Group, {widths: 'equal'},
             h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
             h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
@@ -139,6 +150,8 @@ App= MkUiComponent(function App(my) {
           ),
           h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Mission Description'}),
           h(Form.Checkbox, {label:'extra mission option'}),
+          //A: mensaje subida exitosa de mision
+          h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
           h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
         ),
 		));
