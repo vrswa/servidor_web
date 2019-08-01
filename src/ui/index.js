@@ -37,11 +37,31 @@ function colorMision( status){
   return 'green';
 }
 
+//U: con el input del forma crea y envia un json con la iformacion de la mision
+function crearMision(my) {
+  var data = {
+    "header": my.state.nombre,
+    "description": my.state.descripcion,
+    "meta": my.state.fechaExpiracion,
+    "status":"sin iniciar",
+    "nombreCarpeta": my.state.missionId
+  }
+  //TODO: sin funciona hacerlo funcion
+  var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
+  console.log(url);
+  var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
+  var formData = new FormData();
+  formData.append("index",index,"index.json");
+  var request = new XMLHttpRequest();
+  request.open("POST", url);
+  request.send(formData)
+  //--------------------------------------------------------------------------------------------
+}
 App= MkUiComponent(function App(my) {
   XAPP = my;//A:para debug accesible desde la consola
   my.onCfg = onCfg;
   my.colorMision = colorMision;
- 
+  //my.crearMision = crearMision;
   //VER: https://preactjs.com/guide/api-reference
   my.componentDidMount = function () {
     misiones_P().then( res => my.setState({misiones: res}));
@@ -63,7 +83,6 @@ App= MkUiComponent(function App(my) {
 		  status: 'terminado',
 		},
     */
-   
       misionesItems= state.misiones.map(estaMision => {
         return {
           header: estaMision.header,
@@ -106,7 +125,20 @@ App= MkUiComponent(function App(my) {
 						h('div',{},'No hay ninguna archivo todavía')
 					:
            h('div',{},'cargando')),
+      
         //-----------------------------------------------------
+        //FORMULARIO
+        h('h2',{},'formulario de nueva mision'),
+        h(Form,{},
+          h(Form.Group, {widths: 'equal'},
+            h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
+            h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
+            h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})}, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
+          ),
+          h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Mission Description'}),
+          h(Form.Checkbox, {label:'extra mission option'}),
+          h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
+        ),
 		));
   }
 });
