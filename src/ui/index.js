@@ -19,9 +19,10 @@ function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca 
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
 }
+
+//U: obtiene los nombres de todos los archivos dentro de un mision
 async function mostrarMasInfo (my, mision) {
   my.setState({wantsCfg: !my.state.wantsCfg});
-  //archivos_P(mision.nombreCarpeta).then(res => console.log(res[0], res[1], res[2]));
   vectorDeNombres = await archivos_P(mision.nombreCarpeta);
   my.setState({nombreArchivos: vectorDeNombres});
   my.setState({nombreCarpeta: mision.nombreCarpeta});
@@ -111,6 +112,7 @@ App= MkUiComponent(function App(my) {
 					:
            h('div',{},'cargando')),
         //-----------------------------------------------------
+        //U: mostrar lista de los archivos de una mision
         h('div', {id:'archivos', style: {display: state.wantsCfg ? 'block' : 'none' }},
         nombreArchivos ? 
 					nombreArchivos.length>0 ?(
@@ -127,7 +129,7 @@ App= MkUiComponent(function App(my) {
            h('div',{},'cargando')),
       
         //-----------------------------------------------------
-        //FORMULARIO
+        //U: FORMULARIO para cargar nueva mision
         h('h2',{},'formulario de nueva mision'),
         h(Form,{},
           h(Form.Group, {widths: 'equal'},
