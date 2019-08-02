@@ -2,9 +2,6 @@ function misiones_P() {
   return fetch('/api/mission').then(res => res.json())
 }
 
-function archivos_P(missionId){
-  return fetch('/api/mission/' + missionId).then(res => res.json());
-}
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
 var app_style= {};
@@ -14,18 +11,9 @@ function setTheme(t) {
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
 
-
 function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca adentro
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
-}
-
-//U: obtiene los nombres de todos los archivos dentro de un mision
-async function mostrarMasInfo (my, mision) {
-  my.setState({wantsCfg: !my.state.wantsCfg});
-  vectorDeNombres = await archivos_P(mision.nombreCarpeta);
-  my.setState({nombreArchivos: vectorDeNombres});
-  my.setState({nombreCarpeta: mision.nombreCarpeta});
 }
 
 //U: pone el color para tres estados posibles "sin iniciar, iniciado, completado"
@@ -38,36 +26,8 @@ function colorMision( status){
   return 'green';
 }
 
-//U: con el input del forma crea y envia un json con la iformacion de la mision
-function crearMision(my) {
-  //my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario animacion cargando
-  var data = {
-    "header": my.state.nombre,
-    "description": my.state.descripcion,
-    "meta": my.state.fechaExpiracion,
-    "status":"sin iniciar",
-    "nombreCarpeta": my.state.missionId
-  }
-  //TODO: sin funciona hacerlo funcion
-  var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
-  var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
-  var formData = new FormData();
-  formData.append("index",index,"index.json");
-  var request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState == XMLHttpRequest.DONE) {
-        if(request.responseText == 'ok'|| 'OK'){
-          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario quitar animacion cargando
-          console.log("ok ");
-        }
-    }
-  }
-
-  request.open("POST", url);
-  request.send(formData)
-  //--------------------------------------------------------------------------------------------
-}
-App= MkUiComponent(function App(my) {
+//U: componente que la primer pagina y que muestra las misiones Activas
+uiMissions= MkUiComponent(function uiMissions(my) {
   XAPP = my;//A:para debug accesible desde la consola
   my.onCfg = onCfg;
   
@@ -103,7 +63,7 @@ App= MkUiComponent(function App(my) {
           status: estaMision.status,
           extra: h('div',{},
             h(Icon,{name: 'sign language', color: colorMision(estaMision.status)}),//A: cambia segun status
-            h(Button,{onClick: () => mostrarMasInfo(my, estaMision)},'ver detalle')
+            h(Button,{onClick: () =>preactRouter.route("missions/" + estaMision.missionId)},'ver detalle')
           ),
         }
       }); 
@@ -123,40 +83,73 @@ App= MkUiComponent(function App(my) {
 					:
            h('div',{},'cargando')),
         //-----------------------------------------------------
+		));
+  }
+});
+
+//U: componente que muestra los archivos de una mision
+uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
+  
+  my.componentWillMount = function () {
+    fetch('/api/mission/' + this.props.missionId)
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(myJson) {
+        my.setState({nombreArchivos: myJson})
+      });
+  }
+  my.render = function(props,state){
+    return(
         //U: mostrar lista de los archivos de una mision
-        h('div', {id:'archivos', style: {display: state.wantsCfg ? 'block' : 'none' }},
-        nombreArchivos ? 
-					nombreArchivos.length>0 ?(
+        h('div', {id:'archivos',},
+        state.nombreArchivos ? 
+					state.nombreArchivos.length>0 ?(
             h('div',{},
               h(Button,{onClick: () =>onCfg(my)},"volver"),
-              nombreArchivos.map( nombreArchivo =>
-                h('a',{href: `http://localhost:8080/api/mission/${nombreCarpeta}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
+              state.nombreArchivos.map( nombreArchivo =>
+                h('a',{href: `http://localhost:8080/api/mission/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
               )
             )
           )
             :
 						h('div',{},'No hay ninguna archivo todavía')
 					:
-           h('div',{},'cargando')),
-      
+           h('div',{},'cargando'))   
         //-----------------------------------------------------
-        //U: FORMULARIO para cargar nueva mision
-        h('h2',{},'formulario de nueva mision'),
-        h(Form,{success: !state.missionUploadOk},
-          h(Form.Group, {widths: 'equal'},
-            h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
-            h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
-            h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})}, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
-          ),
-          h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Mission Description'}),
-          h(Form.Checkbox, {label:'extra mission option'}),
-          //A: mensaje subida exitosa de mision
-          h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
-          h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
-        ),
-		));
+    )}
+});
+
+
+//U: las rutas que contiene mi web app
+Rutas= {
+	"/": {cmp: uiMissions},
+  "/missions/:missionId": {cmp: uiMissionFiles},
+}
+
+app_style= { //U: CSS especifico para la aplicacion
+	// 'background-color': '#cccccc',
+	'height': '100%', /* You must set a specified height */
+};
+
+
+App= MkUiComponent(function App(my) {
+  my.render= function (props, state) {
+    return (
+			h('div', {id:'app', style: app_style},
+				//h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
+
+				h(preactRouter.Router, {history: History.createHashHistory()},
+					Object.entries(Rutas).map( ([k,v]) => 
+						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
+					)
+				), //A: la parte de la app que controla el router
+				//VER: https://github.com/preactjs/preact-router
+			)
+		);
   }
 });
+
 
 setTheme('chubby');  //cyborg
 render(h(App), document.body);
