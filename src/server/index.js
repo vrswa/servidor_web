@@ -201,16 +201,21 @@ app.post('/api/mission/:missionId',(req,res) => {
 });
 
 //U: devuelve los nombres de todos los archivos dentro de un mision
-app.get('/api/mission/:missionId',(req,res) => {	
+app.get('/api/mission/:missionId',(req,res) => {
+	
 	var r = new Array();
 	var rutaMision = rutaCarpeta(req.params.missionId,null,false);
 	if (rutaMision == null){
-		res.sendStatus(404).send("no existe la mision");
+		//res.sendStatus(404).send("no existe la mision");
+		console.log("no hay mision");
+		res.send("no existe la mision");
+	}else{
+		fs.readdirSync(rutaMision).forEach(file => {
+			r.push(file);
+		});
+		res.set('missionId', req.params.missionId);	
+		res.send(r);
 	}
-	fs.readdirSync(rutaMision).forEach(file => {
-		r.push(file);
-	});
-	res.send(r);
 });
 
 //U: mediante GET se pide un archivo especifico de una mision especifica
