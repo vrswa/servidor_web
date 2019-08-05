@@ -106,10 +106,11 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
         state.nombreArchivos ? 
 					state.nombreArchivos.length>0 ?(
             h('div',{},
-              h(Button,{onClick: () =>onCfg(my)},"volver"),
+              h(Button,{onClick: () =>preactRouter.route("/")},"volver"),
+              h('ul',{},
               state.nombreArchivos.map( nombreArchivo =>
-                h('a',{href: `http://localhost:8080/api/mission/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo)
-              )
+                h('li',{},h('a',{href: `http://localhost:8080/api/mission/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo))
+              ))
             )
           )
             :
@@ -120,11 +121,33 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
     )}
 });
 
+uiCreateMission= MkUiComponent(function uiCreateMission(my) {
+	my.render= function () {
+    return h('div',{},
+      h('h1',{},"Proximamanete formulario"),
+      h(Form,{success: !my.state.missionUploadOk},
+        h(Form.Group, {widths: 'equal'},
+          h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
+          h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
+          h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})}, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
+        ),
+        h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Mission Description'}),
+        h(Form.Checkbox, {label:'extra mission option'}),
+        //A: mensaje subida exitosa de mision
+        h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
+        h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
+      ),
+      h(Segment,{basic:true},
+			h(Button,{onClick: ()=> preactRouter.route("/")},"Volver"))
+		);
+	}
+});
 
 //U: las rutas que contiene mi web app
 Rutas= {
 	"/": {cmp: uiMissions},
   "/missions/:missionId": {cmp: uiMissionFiles},
+  "/missions/createMission": {cmp: uiCreateMission}
 }
 
 app_style= { //U: CSS especifico para la aplicacion
@@ -136,9 +159,9 @@ app_style= { //U: CSS especifico para la aplicacion
 App= MkUiComponent(function App(my) {
   my.render= function (props, state) {
     return (
-			h('div', {id:'app', style: app_style},
-				//h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
-
+			h(Container, {id:'app', style: app_style},
+        //h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
+        h(Button,{style:{'margin-bottom': '5%','margin-top': '5%'},floated:'right', basic:true, color:'blue', content:'New mission', icon:'fork', onClick: () =>preactRouter.route("/missions/createMission")}),
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
 						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
