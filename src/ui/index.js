@@ -52,7 +52,8 @@ function crearMision(my) {
   request.onreadystatechange = function() {
     if (request.readyState == XMLHttpRequest.DONE) {
         if(request.responseText == 'ok'|| 'OK'){
-          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario quitar animacion cargando
+          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: activar cartel envio ok
+          setTimeout(function(){ my.setState({missionUploadOk: !my.state.missionUploadOk}); console.log("asd")}, 4000) //A:despues de 4 segundos sacar cartel
           console.log("ok ");
         }
     }
@@ -164,7 +165,7 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
       h('h1',{},"Proximamanete formulario"),
       h(Form,{success: my.state.missionUploadOk},
         h(Form.Group, {widths: 'equal'},
-          h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
+          h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})},required:true, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
           h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
           h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})}, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
         ),
