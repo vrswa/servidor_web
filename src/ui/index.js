@@ -41,6 +41,12 @@ function crearMision(my) {
   var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
   var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
   var formData = new FormData();
+  //archivos
+  var archivos = document.getElementById("files");
+  console.log(archivos.files);
+  for (var i = 0; i < archivos.files.length; i++) {
+    formData.append(`file${i}`,archivos.files[i],archivos.files[i].name);
+  }
   formData.append("index",index,"index.json");
   var request = new XMLHttpRequest();
   request.onreadystatechange = function() {
@@ -156,7 +162,7 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
 	my.render= function () {
     return h('div',{},
       h('h1',{},"Proximamanete formulario"),
-      h(Form,{success: !my.state.missionUploadOk},
+      h(Form,{success: my.state.missionUploadOk},
         h(Form.Group, {widths: 'equal'},
           h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})}, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
           h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
@@ -166,10 +172,12 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
         h(Form.Checkbox, {label:'extra mission option'}),
         //A: mensaje subida exitosa de mision
         h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
+        //Select images: <input type="file" name="img" multiple></input>
+        h('input',{type:'file',id:'files',multiple:true},"Add files"),
         h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
       ),
       h(Segment,{basic:true},
-			h(Button,{onClick: ()=> preactRouter.route("/")},"Volver"))
+			  h(Button,{onClick: ()=> preactRouter.route("/")},"Volver"))
 		);
 	}
 });
@@ -192,7 +200,7 @@ App= MkUiComponent(function App(my) {
     return (
 			h(Container, {id:'app', style: app_style},
         //h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
-        h(Button,{style:{'margin-bottom': '5%','margin-top': '5%'},floated:'right', basic:true, color:'blue', content:'New mission', icon:'fork', onClick: () =>preactRouter.route("/missions/createMission")}),
+        h(Button,{floated:'right', basic:true, color:'blue', content:'New mission', icon:'fork', onClick: () =>preactRouter.route("/missions/createMission")}),
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
 						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
