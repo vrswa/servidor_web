@@ -32,7 +32,7 @@ function crearMision(my) {
   //my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario animacion cargando
   var data = {
     "header": my.state.nombre,
-    "description": my.state.descripcion,
+    "description": my.state.descripcion ||  "sin descripcion",
     "meta": my.state.fechaExpiracion,
     "status":"sin iniciar",
     "nombreCarpeta": my.state.missionId
@@ -166,8 +166,8 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
       h(Form,{success: my.state.missionUploadOk},
         h(Form.Group, {widths: 'equal'},
           h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})},required:true, value:my.state.nombre, fluid: true, label:'mission name', placeholder:'mission name'},),
-          h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
-          h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})}, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
+          h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, required:true,value:my.state.missionId, fluid: true, label:'mission id', placeholder:'mission id'},),
+          h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})},required:true, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
         ),
         h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Mission Description'}),
         h(Form.Checkbox, {label:'extra mission option'}),
