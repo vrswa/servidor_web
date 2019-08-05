@@ -50,7 +50,7 @@ function leerJson(ruta){
   limpiarFname("Ok.mp3");
   */
   function limpiarFname(fname, dfltExt) {
-	var fnameYext= fname.match(/(.+?)(\.(mp4|mp3|wav|png|jpg|json|txt))/) || ["",fname, dfltExt||""];
+	var fnameYext= fname.match(/(.+?)(\.(mp4|mp3|wav|png|jpg|json|txt|pdf))/) || ["",fname, dfltExt||""];
 	//A: o tiene una extension aceptada, o le ponemos dfltExt o ""
 	var fnameSinExt= fnameYext[1];
 	var fnameLimpio= fnameSinExt.replace(/[^a-z0-9_-]/gi,"_") + fnameYext[2];
@@ -202,7 +202,6 @@ app.post('/api/mission/:missionId',(req,res) => {
 
 //U: devuelve los nombres de todos los archivos dentro de un mision
 app.get('/api/mission/:missionId',(req,res) => {
-	
 	var r = new Array();
 	var rutaMision = rutaCarpeta(req.params.missionId,null,false);
 	if (rutaMision == null){
@@ -223,9 +222,11 @@ app.get('/api/mission/:missionId',(req,res) => {
 app.get('/api/mission/:missionId/:file',(req,res) => {	
 	var rutaArchivo = rutaCarpeta( req.params.missionId, req.params.file,false);
 	if (fs.existsSync(rutaArchivo)){
+		console.log(req.params.file);
+		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(path.resolve(rutaArchivo)); //res.sendfile consider "../" como corrupto
 	}else{
-		res.status(404);
+		res.status(404).send("no file or Mission");
 	}
 });
 
