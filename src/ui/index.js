@@ -33,7 +33,7 @@ function crearMision(my) {
   var data = {
     "header": my.state.nombre,
     "description": my.state.descripcion ||  "sin descripcion",
-    "meta": my.state.fechaExpiracion,
+    "meta": my.state.fechaExpiracion || "sin fecha caducidad",
     "status":"sin iniciar",
     "nombreCarpeta": my.state.missionId
   }
@@ -175,7 +175,7 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
         h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
         //Select images: <input type="file" name="img" multiple></input>
         h('input',{type:'file',id:'files',multiple:true},"Add files"),
-        h(Form.Button,{onClick: () => crearMision(my)},'Subir Mision')   
+        h(Form.Button,{color:'blue',disabled: !my.state.nombre || !my.state.missionId,onClick: () => crearMision(my)},'Subir Mision')   
       ),
       h(Segment,{basic:true},
 			  h(Button,{onClick: ()=> preactRouter.route("/")},"Volver"))
