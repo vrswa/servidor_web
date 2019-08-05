@@ -6,6 +6,7 @@ var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper rea
               .split(' ');
 var app_style= {};
 
+//funciones--------------------------------------------------
 function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
@@ -26,6 +27,36 @@ function colorMision( status){
   return 'green';
 }
 
+//U: con el input del form crea y envia un json con la informacion de la mision
+function crearMision(my) {
+  //my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario animacion cargando
+  var data = {
+    "header": my.state.nombre,
+    "description": my.state.descripcion,
+    "meta": my.state.fechaExpiracion,
+    "status":"sin iniciar",
+    "nombreCarpeta": my.state.missionId
+  }
+  //TODO: sin funciona hacerlo funcion
+  var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
+  var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
+  var formData = new FormData();
+  formData.append("index",index,"index.json");
+  var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if (request.readyState == XMLHttpRequest.DONE) {
+        if(request.responseText == 'ok'|| 'OK'){
+          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario quitar animacion cargando
+          console.log("ok ");
+        }
+    }
+  }
+
+  request.open("POST", url);
+  request.send(formData)
+  //--------------------------------------------------------------------------------------------
+}
+//---------------------------------------------------------------------
 //U: componente que la primer pagina y que muestra las misiones Activas
 uiMissions= MkUiComponent(function uiMissions(my) {
   XAPP = my;//A:para debug accesible desde la consola
