@@ -159,6 +159,7 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
     )}
 });
 
+//U: componente que muestra un formulario y crea un mision nueva (se pueden subir archivos)
 uiCreateMission= MkUiComponent(function uiCreateMission(my) {
 	my.render= function () {
     return h('div',{},
@@ -183,6 +184,23 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
 	}
 });
 
+//U:Componente que permite cambiar el theme de la pagina
+uiCfg= MkUiComponent(function uiCfg(my) {
+	my.render= function () {
+    return (
+			h('div', {id:'app'},
+				h(Button,{onClick: () => onCfg(my), style: {float: 'right'}, basic: true, color: 'gray'},'Cfg'),
+				h('div',{style: {display: my.state.wantsCfg ? 'block' : 'none'}},
+          //A: esta div se muestra solo si el my.state.wantsCfg es true
+          h('div',{},
+             Estilos.map(k => 
+                h(Button,{basic: true, onClick: () => setTheme(k)},k))
+          )
+        ),
+      )
+    )
+	}
+});
 //U: las rutas que contiene mi web app
 Rutas= {
 	"/": {cmp: uiMissions},
@@ -201,6 +219,7 @@ App= MkUiComponent(function App(my) {
     return (
 			h(Container, {id:'app', style: app_style},
         //h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
+        h(uiCfg,{},),
         h(Button,{floated:'right', basic:true, color:'blue', content:'New mission', icon:'fork', onClick: () =>preactRouter.route("/missions/createMission")}),
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
