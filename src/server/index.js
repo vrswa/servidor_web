@@ -1,5 +1,6 @@
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
 CfgDbBaseDir = 'SmartWorkAR/db/missions'; //A: las misiones que llegan se escriben aqui
+CfgDbProtocolsDir = 'SmartWorkAR/db/protocols';
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
 
 //----------------------------------------------------------
@@ -40,8 +41,8 @@ function net_interfaces() { //U: conseguir las interfases de red
 
 function leerJson(ruta){
 	return JSON.parse(fs.readFileSync(ruta));
-  }
-  
+}
+
   //U: limpia extensiones de archivos no aceptadas, por aceptadas
   /*
   limpiarFname("../../esoy un path \\Malvado.exe");
@@ -59,10 +60,14 @@ function leerJson(ruta){
   }
   
   //U: devuelve la ruta a la carpeta o archivo si wantsCreate es true la crea sino null
-  function rutaCarpeta(missionId,file,wantsCreate) {
+  function rutaCarpeta(missionId,file,wantsCreate,protocol) {
 	missionId = limpiarFname(missionId||"_0SinMision_");
 	file = file!=null && limpiarFname(file,".dat");
-	var rutaCarpeta = `${CfgDbBaseDir}/${missionId}`;
+
+	if (protocol == true) folderRouter = CfgDbProtocolsDir;
+	else folderRouter = CfgDbBaseDir;
+
+	var rutaCarpeta = `${folderRouter}/${missionId}`;
 	if (!fs.existsSync(rutaCarpeta)) { 
 		  if (wantsCreate){
 		  	fs.mkdirSync(rutaCarpeta, {recursive: true});
@@ -146,11 +151,12 @@ app.get('/api/isSmartWorkAR',(req,res) => {
 });
 
 //U: mediante GET se piden los index.json de todas las misiones
-app.get('/api/mission',(req,res) => {
+app.get('/api/missions',(req,res) => {
 	var r = new Array();
   
 	fs.readdir(CfgDbBaseDir, function(err, carpetas) {
 		carpetas= carpetas || []; //A: puede no venir ninguna
+		console.log(carpetas);
 	  for (var i=0; i<carpetas.length; i++) {
 			var rutaArchivo = `${CfgDbBaseDir}/${carpetas[i]}/index.json`;
 			if (fs.existsSync(rutaArchivo)) {
@@ -166,7 +172,7 @@ app.get('/api/mission',(req,res) => {
 //nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'fileX=@/path/to/fileX' -F 'fileY=@/path/to/fileY' ... http://localhost/upload
 //U:  curl -F 'file=@\Users\VRM\Pictures\leon.jpg' -F 'file2=@\Users\VRM\Pictures\gorila.jpg' -F 'file3=@\Users\VRM\Pictures\guepardo.jpg' -F 'file4=@\Users\VRM\Pictures\leon2.jpg' -F 'file5=@\Users\VRM\Pictures\rinoceronte.jpg' http://localhost:8080/api/mission/misionDaniel
-app.post('/api/mission/:missionId',(req,res) => {	
+app.post('/api/missions/:missionId',(req,res) => {	
 	//console.log(JSON.stringify(req.headers))
 	console.log(JSON.stringify(req.body));
 	//console.log(req.files);
@@ -201,7 +207,7 @@ app.post('/api/mission/:missionId',(req,res) => {
 });
 
 //U: devuelve los nombres de todos los archivos dentro de un mision
-app.get('/api/mission/:missionId',(req,res) => {
+app.get('/api/missions/:missionId',(req,res) => {
 	var r = new Array();
 	var rutaMision = rutaCarpeta(req.params.missionId,null,false);
 	if (rutaMision == null){
@@ -219,7 +225,7 @@ app.get('/api/mission/:missionId',(req,res) => {
 
 //U: mediante GET se pide un archivo especifico de una mision especifica
 //curl "http://localhost:8888/api/mission/misionDaniel/leon.jpg"
-app.get('/api/mission/:missionId/:file',(req,res) => {	
+app.get('/api/missions/:missionId/:file',(req,res) => {	
 	var rutaArchivo = rutaCarpeta( req.params.missionId, req.params.file,false);
 	if (fs.existsSync(rutaArchivo)){
 		console.log(req.params.file);
@@ -229,6 +235,49 @@ app.get('/api/mission/:missionId/:file',(req,res) => {
 		res.status(404).send("no file or Mission");
 	}
 });
+
+
+//--------------------------------------NUEVAS APIS-------------------------------------
+app.get('/api/protocols',(req,res) => {
+	var r = new Array();
+  
+	fs.readdir(CfgDbProtocolsDir, function(err, carpetas) {
+		if (err) res.status(500).send('error reading folders');
+
+		carpetas= carpetas || []; //A: puede no venir ninguna
+		res.status(200).send(carpetas);
+	})
+})
+
+
+//U: devuelve los nombres de todos los archivos dentro de un protocolo
+app.get('/api/protocols/:protocolId',(req,res) => {
+	var r = new Array();
+	var rutaMision = rutaCarpeta(req.params.protocolId,null,false,true);
+	if (rutaMision == null){
+		res.status(404).send("protocol "+ req.params.protocolId+" does not exists");
+	}else{
+		fs.readdirSync(rutaMision).forEach(file => {
+			r.push(file);
+		});
+		res.set('protocolId', req.params.protocolId);	
+		res.send(r);
+	}
+});
+
+//U: mediante GET se pide un archivo especifico de una protocolo especifico
+//curl "http://localhost:8888/api/protocols/chekearFiltros/sample.txt"
+app.get('/api/protocols/:protocolId/:file',(req,res) => {	
+	var rutaArchivo = rutaCarpeta( req.params.protocolId, req.params.file,false,true);
+	if (fs.existsSync(rutaArchivo)){
+		console.log("archivo pedido: ", req.params.file);
+		res.set('fileName', req.params.file);	
+		res.status(200).sendFile(path.resolve(rutaArchivo)); //res.sendfile considera "../" como corrupto
+	}else{
+		res.status(404).send("no file or Mission");
+	}
+});
+
 
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
