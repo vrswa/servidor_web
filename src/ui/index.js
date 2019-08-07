@@ -2,16 +2,11 @@ function misiones_P() {
   return fetch('/api/mission').then(res => res.json())
 }
 
-var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
-              .split(' ');
-var app_style= {};
-
-//funciones--------------------------------------------------
+//Funciones
 function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
-
 function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca adentro
   my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
   //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
@@ -67,11 +62,10 @@ function crearMision(my) {
 //U: componente que la primer pagina y que muestra las misiones Activas
 uiMissions= MkUiComponent(function uiMissions(my) {
   XAPP = my;//A:para debug accesible desde la consola
-  my.onCfg = onCfg;
   
   my.colorMision = colorMision;
   my.state.missionUploadOk = true;
-  
+  my.onCfg = onCfg;
   //VER: https://preactjs.com/guide/api-reference
   my.componentDidMount = function () {
     misiones_P().then( res => my.setState({misiones: res}));
@@ -186,6 +180,10 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
 
 //U:Componente que permite cambiar el theme de la pagina
 uiCfg= MkUiComponent(function uiCfg(my) {
+  var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
+              .split(' ');
+  
+    
 	my.render= function () {
     return (
 			h('div', {id:'app'},
@@ -201,6 +199,7 @@ uiCfg= MkUiComponent(function uiCfg(my) {
     )
 	}
 });
+
 //U: las rutas que contiene mi web app
 Rutas= {
 	"/": {cmp: uiMissions},

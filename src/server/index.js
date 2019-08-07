@@ -167,9 +167,9 @@ app.get('/api/mission',(req,res) => {
 //U: curl -F 'fileX=@/path/to/fileX' -F 'fileY=@/path/to/fileY' ... http://localhost/upload
 //U:  curl -F 'file=@\Users\VRM\Pictures\leon.jpg' -F 'file2=@\Users\VRM\Pictures\gorila.jpg' -F 'file3=@\Users\VRM\Pictures\guepardo.jpg' -F 'file4=@\Users\VRM\Pictures\leon2.jpg' -F 'file5=@\Users\VRM\Pictures\rinoceronte.jpg' http://localhost:8080/api/mission/misionDaniel
 app.post('/api/mission/:missionId',(req,res) => {	
-	
+	//console.log(JSON.stringify(req.headers))
 	console.log(JSON.stringify(req.body));
-	console.log(req.files);
+	//console.log(req.files);
     
 	try{ 
 		if(!req.files){  return res.status(400); }
