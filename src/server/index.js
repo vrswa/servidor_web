@@ -1,6 +1,5 @@
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
-CfgDbBaseDir = 'SmartWorkAR/db/missions'; //A: las misiones que llegan se escriben aqui
-CfgDbProtocolsDir = 'SmartWorkAR/db/protocols';
+CfgDbBaseDir = 'TGN/protocols'; //A: los protocolos se encuentran aqui
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
 
 //----------------------------------------------------------
@@ -60,14 +59,11 @@ function leerJson(ruta){
   }
   
   //U: devuelve la ruta a la carpeta o archivo si wantsCreate es true la crea sino null
-  function rutaCarpeta(missionId,file,wantsCreate,protocol) {
-	missionId = limpiarFname(missionId||"_0SinMision_");
+  function rutaCarpeta(rutaprevia,folderId,file,wantsCreate) {
+	folderId = limpiarFname(folderId||"_0SinProtocolo_");
 	file = file!=null && limpiarFname(file,".dat");
 
-	if (protocol == true) folderRouter = CfgDbProtocolsDir;
-	else folderRouter = CfgDbBaseDir;
-
-	var rutaCarpeta = `${folderRouter}/${missionId}`;
+	var rutaCarpeta = `${rutaprevia}/${folderId}`;
 	if (!fs.existsSync(rutaCarpeta)) { 
 		  if (wantsCreate){
 		  	fs.mkdirSync(rutaCarpeta, {recursive: true});
@@ -84,15 +80,18 @@ function leerJson(ruta){
 	  return rutaCarpeta;
 	}
   }
-  /* TESTS
-  console.log(rutaCarpeta("t_rutaCarpeta_ok",null,true))
-  console.log(rutaCarpeta("t_rutaCarpeta_ok","arch1",true))
-  console.log(rutaCarpeta("t_rutaCarpeta2_ok","arch2",true))
-  console.log(rutaCarpeta("t_rutaCarpeta2_ok","Malvado1.exe",true)) //A: no pasa exe
-  console.log(rutaCarpeta("t_rutaCarpeta2_ok","/root/passwd",true)) //A: no pasa /
-  console.log(rutaCarpeta("../../t_rutaCarpeta_dirUp_MAL","index.json",true)) //A: no pasa ../
-  console.log(rutaCarpeta("/t_rutaCarpeta_root_MAL","index.json",true)) //A: no pasa /
-  */
+//   TESTS
+//   console.log(rutaCarpeta(CfgDbBaseDir,"t_rutaCarpeta_ok",null,true))
+//   console.log(rutaCarpeta(CfgDbBaseDir,"t_rutaCarpeta_ok","arch1",true))
+//   console.log(rutaCarpeta(CfgDbBaseDir,"t_rutaCarpeta2_ok","arch2",true))
+//   console.log(rutaCarpeta(CfgDbBaseDir,"t_rutaCarpeta2_ok","Malvado1.exe",true)) //A: no pasa exe
+//   console.log(rutaCarpeta(CfgDbBaseDir,"t_rutaCarpeta2_ok","/root/passwd",true)) //A: no pasa /
+//   console.log(rutaCarpeta(CfgDbBaseDir,"../../t_rutaCarpeta_dirUp_MAL","index.json",true)) //A: no pasa ../
+//   console.log(rutaCarpeta(CfgDbBaseDir,"/t_rutaCarpeta_root_MAL","index.json",true)) //A: no pasa /
+//   console.log(rutaCarpeta(CfgDbBaseDir,"mantenimientoTurbina",null,false)) //A: devuelve ruta a protocolo en especifico
+//   console.log(rutaCarpeta( path.join(CfgDbBaseDir,"mantenimientoTurbina","missions"),"misionMantenimientoTurbina_1",null,false))//A: devuelve ruta  a mission especifica
+//   console.log(rutaCarpeta( path.join(CfgDbBaseDir,"mantenimientoTurbina","missions"),"misionNueva",null,true))//A: crear carpeta para mision
+//   console.log(rutaCarpeta( path.join(CfgDbBaseDir,"mantenimientoTurbina","missions"),"misionFalsa",null,false))//A: no crea carpeta para mision
 
 //U: recibe la ruta de un archivo y devuelve un hash con el md5
 //VER: https://gist.github.com/GuillermoPena/9233069
@@ -238,10 +237,11 @@ app.get('/api/missions/:missionId/:file',(req,res) => {
 
 
 //--------------------------------------NUEVAS APIS-------------------------------------
+//U: devuelve todos los protocolos existentes
 app.get('/api/protocols',(req,res) => {
 	var r = new Array();
   
-	fs.readdir(CfgDbProtocolsDir, function(err, carpetas) {
+	fs.readdir(CfgDbBaseDir, function(err, carpetas) {
 		if (err) res.status(500).send('error reading folders');
 
 		carpetas= carpetas || []; //A: puede no venir ninguna
@@ -252,15 +252,16 @@ app.get('/api/protocols',(req,res) => {
 
 //U: devuelve los nombres de todos los archivos dentro de un protocolo
 app.get('/api/protocols/:protocolId',(req,res) => {
+	var protocolId = req.params.protocolId;
 	var r = new Array();
-	var rutaMision = rutaCarpeta(req.params.protocolId,null,false,true);
+	var rutaMision = rutaCarpeta(CfgDbBaseDir,protocolId,null,false);
 	if (rutaMision == null){
-		res.status(404).send("protocol "+ req.params.protocolId+" does not exists");
+		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		fs.readdirSync(rutaMision).forEach(file => {
 			r.push(file);
 		});
-		res.set('protocolId', req.params.protocolId);	
+		res.set('protocolId', protocolId);	
 		res.send(r);
 	}
 });
