@@ -260,7 +260,17 @@ app.get('/api/protocols/:protocolId/:file',(req,res) => {
 		res.status(404).send("no file or Mission");
 	}
 });
-
+function todosLosNombresDeArchivos (ruta){
+	var r = new Array();
+	if (ruta && fs.existsSync(ruta)){
+		fs.readdirSync(ruta).forEach(item => {
+			item = item || [];
+			r.push(item);
+		});
+	}
+	return r;
+}
+//U: se devuelven todas las misiones de todos los protocoles 
 app.get('/api/missions',(req,res) => {
 	var r = new Array();
 	var carpetaProtocolos = CfgDbBaseDir; //tgn/protocols
@@ -269,7 +279,6 @@ app.get('/api/missions',(req,res) => {
 		protocolo = protocolo || [];
 		var rutaProtocolo = path.join(carpetaProtocolos,protocolo);
 		fs.readdirSync(rutaProtocolo).forEach(file => {
-			console.log()
 			file = file || [];
 			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
 				var rutaProtocoloMision = path.join(rutaProtocolo,file);
@@ -284,6 +293,20 @@ app.get('/api/missions',(req,res) => {
 	});
 	res.send(r);
 });
+
+//U: se devuelven todos los nombres de misiones de un protocolo especifico
+app.get('/api/:protocolId/:missionId',(req,res) => {
+	var ruta = rutaCarpeta(CfgDbBaseDir,req.params.protocolId,null,false);
+	
+	ruta = path.join(ruta, "missions");
+	
+	if (ruta) ruta = rutaCarpeta(ruta, req.params.missionId,null,false);
+	
+	if (!ruta) res.status(400).send('not file or directory');
+
+	var nombreArchivos = todosLosNombresDeArchivos(ruta);
+	res.status(200).send(nombreArchivos);
+})
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
