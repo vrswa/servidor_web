@@ -149,25 +149,6 @@ app.get('/api/isSmartWorkAR',(req,res) => {
 	return res.status(200).send("YES");
 });
 
-//U: mediante GET se piden los index.json de todas las misiones
-app.get('/api/missions',(req,res) => {
-	var r = new Array();
-  
-	fs.readdir(CfgDbBaseDir, function(err, carpetas) {
-		carpetas= carpetas || []; //A: puede no venir ninguna
-		console.log(carpetas);
-	  for (var i=0; i<carpetas.length; i++) {
-			var rutaArchivo = `${CfgDbBaseDir}/${carpetas[i]}/index.json`;
-			if (fs.existsSync(rutaArchivo)) {
-				r.push(leerJson(rutaArchivo));
-			}  
-			//TODO: podriamos querer devolver algo aunque no haya index? ej. subio una foto sola?
-			rutaArchivo="";
-		}
-		return res.status(200).send(r);
-	});
-});
-
 //nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'fileX=@/path/to/fileX' -F 'fileY=@/path/to/fileY' ... http://localhost/upload
 //U:  curl -F 'file=@\Users\VRM\Pictures\leon.jpg' -F 'file2=@\Users\VRM\Pictures\gorila.jpg' -F 'file3=@\Users\VRM\Pictures\guepardo.jpg' -F 'file4=@\Users\VRM\Pictures\leon2.jpg' -F 'file5=@\Users\VRM\Pictures\rinoceronte.jpg' http://localhost:8080/api/mission/misionDaniel
@@ -225,7 +206,7 @@ app.get('/api/missions/:missionId',(req,res) => {
 //U: mediante GET se pide un archivo especifico de una mision especifica
 //curl "http://localhost:8888/api/mission/misionDaniel/leon.jpg"
 app.get('/api/missions/:missionId/:file',(req,res) => {	
-	var rutaArchivo = rutaCarpeta( req.params.missionId, req.params.file,false);
+	var rutaArchivo = rutaCarpeta( CfgDbBaseDir,req.params.missionId, req.params.file,false);
 	if (fs.existsSync(rutaArchivo)){
 		console.log(req.params.file);
 		res.set('fileName', req.params.file);	
@@ -259,17 +240,18 @@ app.get('/api/protocols/:protocolId',(req,res) => {
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		fs.readdirSync(rutaMision).forEach(file => {
-			r.push(file);
+			if (file != 'missions') //A: la carpeta missions no es un archivo
+				r.push(file);
 		});
 		res.set('protocolId', protocolId);	
 		res.send(r);
 	}
 });
 
-//U: mediante GET se pide un archivo especifico de una protocolo especifico
+//U: mediante GET se pide un archivo especifico de un protocolo especifico
 //curl "http://localhost:8888/api/protocols/chekearFiltros/sample.txt"
 app.get('/api/protocols/:protocolId/:file',(req,res) => {	
-	var rutaArchivo = rutaCarpeta( req.params.protocolId, req.params.file,false,true);
+	var rutaArchivo = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, req.params.file,false);
 	if (fs.existsSync(rutaArchivo)){
 		console.log("archivo pedido: ", req.params.file);
 		res.set('fileName', req.params.file);	
@@ -279,7 +261,29 @@ app.get('/api/protocols/:protocolId/:file',(req,res) => {
 	}
 });
 
-
+app.get('/api/missions',(req,res) => {
+	var r = new Array();
+	var carpetaProtocolos = CfgDbBaseDir; //tgn/protocols
+	
+	fs.readdirSync(carpetaProtocolos).forEach(protocolo => {
+		protocolo = protocolo || [];
+		var rutaProtocolo = path.join(carpetaProtocolos,protocolo);
+		fs.readdirSync(rutaProtocolo).forEach(file => {
+			console.log()
+			file = file || [];
+			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
+				var rutaProtocoloMision = path.join(rutaProtocolo,file);
+				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
+					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
+						mision = mision || [];
+						r.push(mision);
+					});
+				}
+			}
+		});
+	});
+	res.send(r);
+});
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
