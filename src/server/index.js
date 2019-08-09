@@ -37,17 +37,7 @@ function net_interfaces() { //U: conseguir las interfases de red
 	// eth0 -> 10.0.0.101
 	return r;
 }
-//U: devuelve los nombres de archivos y carpeta que contienen una ruta
-function todosLosNombresDeArchivos (ruta){
-	var r = new Array();
-	if (ruta && fs.existsSync(ruta)){
-		fs.readdirSync(ruta).forEach(item => {
-			item = item || [];
-			r.push(item);
-		});
-	}
-	return r;
-}
+
 
 function leerJson(ruta){
 	return JSON.parse(fs.readFileSync(ruta));
@@ -77,9 +67,7 @@ function leerJson(ruta){
 	var rutaCarpeta = `${rutaprevia}/${folderId}`;
 	if (secondfolderId){
 		secondfolderId = limpiarFname(secondfolderId);
-		console.log("secondo folder: " ,secondfolderId);
 		rutaCarpeta = `${rutaCarpeta}/missions/${secondfolderId}`;
-		console.log("ruta ", rutaCarpeta);
 	}
 
 	if (!fs.existsSync(rutaCarpeta)) { 
@@ -133,7 +121,22 @@ function fileHash(filename, algorithm = 'md5') {
 		}
 	});
 }
-  
+function leerContidoCarpeta (ruta, omitirNombre){
+	//U: devuelve los nombres de archivos y carpeta que contienen una ruta
+	var r = new Array();
+	if (ruta && fs.existsSync(ruta)){
+		fs.readdirSync(ruta).forEach(item => {
+			item = item || [];
+			if (!omitirNombre){
+				r.push(item);
+			}else{
+				if (item != omitirNombre)
+					r.push(item);
+			}
+		});
+	}
+	return r;
+}
 //--------------------------------------------------------------------
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -256,17 +259,12 @@ app.get('/api/protocols',(req,res) => {
 //curl "http://localhost:8888/api/protocols/protocoloVacio" protocolo vacio
 app.get('/api/protocols/:protocolId',(req,res) => {
 	var protocolId = req.params.protocolId;
-	var r = new Array();
 	var rutaMision = rutaCarpeta(CfgDbBaseDir,protocolId,null,null,false);
 	if (rutaMision == null){
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
-		fs.readdirSync(rutaMision).forEach(file => {
-			if (file != 'missions') //A: la carpeta missions no es un archivo
-				r.push(file);
-		});
 		res.set('protocolId', protocolId);	
-		res.send(r);
+		res.send(leerContidoCarpeta(ruta,missions)); //A: la carpeta mission no la consideramos como archivos
 	}
 });
 
@@ -281,7 +279,7 @@ app.get('/api/protocols/:protocolId/missions',(req,res) => {
 	
 	if (!ruta) res.status(400).send('not file or directory');
 
-	var nombreMisiones = todosLosNombresDeArchivos(ruta);
+	var nombreMisiones = leerContidoCarpeta(ruta,null);
 	res.status(200).send(nombreMisiones);
 
 })
@@ -326,16 +324,13 @@ app.get('/api/missions',(req,res) => {
 
 //U: se devuelven todos los nombres de archivos de una mision
 app.get('/api/protocols/:protocolId/missions/:missionId',(req,res) => {
-	var ruta = rutaCarpeta(CfgDbBaseDir,req.params.protocolId,null,false);
+	var ruta = rutaCarpeta(CfgDbBaseDir,req.params.protocolId,req.params.missionId,null,false);
 	
-	if (ruta){ 
-		ruta = path.join(ruta, "missions");
-		ruta = rutaCarpeta(ruta, req.params.missionId,null,false);
-	}
 	if (!ruta) res.status(400).send('not file or directory');
-
-	var nombreArchivos = todosLosNombresDeArchivos(ruta);
-	res.status(200).send(nombreArchivos);
+	else{
+		var nombreArchivos = leerContidoCarpeta(ruta,'leon.jpg');
+		res.status(200).send(nombreArchivos);
+	}
 })
 
 //U: se devuelve un archivo de una mision
@@ -347,7 +342,6 @@ app.get('/api/protocols/:protocolId/missions/:missionId/:file',(req,res) => {
 	var ruta = rutaCarpeta(CfgDbBaseDir,protocoloId,missionId,file,false);
 	console.log(ruta);
 	if (fs.existsSync(ruta)){
-		console.log(ruta)
 		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(path.resolve(ruta));
 	}else{
@@ -361,6 +355,7 @@ app.get('/api/protocols/:protocolId/missions/:missionId/:file',(req,res) => {
 app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {	
 	var protocolsId = req.params.protocolsId;
 	var missionId = req.params.missionId;
+	var hashInfo = new Array();
 	try{ 
 		if(!req.files){  return res.status(400); }
 		//A: sino me mandaron nigun file devolvi 400
@@ -379,17 +374,21 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 				//A: mostrar hash del archivo
 				fileHash(rutaArchivo).then((hash) => { 
 					console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
+					hashInfo.push( {[file.name] : [hash]} );
 				});
 				
 			});	
 		});
-		return res.status(200).send('OK '); //TODO: enviar tambien HASH
+		return res.status(200).send({'status': 'ok', 'hashes': hashInfo}); //TODO: enviar tambien HASH
 		
 	}catch (err) {
 	  res.status(500).send(err);
 	}
 });
 
+app.get('/api/protocols/protocolsInfo',(req,res) => {
+	var ruta 
+})
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
