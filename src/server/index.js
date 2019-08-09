@@ -137,6 +137,29 @@ function leerContidoCarpeta (ruta, omitirNombre){
 	}
 	return r;
 }
+
+function guardarArchivos(arrayArchivos,ruta){
+	var files = [];
+	var fileKeys = Object.keys(arrayArchivos);
+	var hashInfo = new Array();
+
+	fileKeys.forEach(function(key) {
+		files.push(arrayArchivos[key]);
+	});
+	files.forEach(archivo => {
+		archivo.name = limpiarFname(archivo.name, ".dat"); 
+		var rutaArchivo = path.join(ruta,archivo.name);
+		//A: ruta carpeta limpia path (que no tenga .. exe js )
+		//A : el tamaño maximo se controla con CfgUploadSzMax	
+		archivo.mv( rutaArchivo, err => {
+			//A: mostrar hash del archivo
+			fileHash(rutaArchivo).then((hash) => { 
+				console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
+				hashInfo.push( {[archivo.name] : hash} );
+			})
+		})
+	});	
+}
 //--------------------------------------------------------------------
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -162,82 +185,7 @@ app.get('/', function(req, res) {
 		res.redirect('/ui/');
 });
 
-/*
-//U: mediante GET se piden los index.json de todas las misiones
-app.get('/api/isSmartWorkAR',(req,res) => {
-	var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-	console.log("CLIENT AT " + ip);
-	return res.status(200).send("YES");
-});
 
-//nos envian via POST uno o varios archivos de una mission
-//U: curl -F 'fileX=@/path/to/fileX' -F 'fileY=@/path/to/fileY' ... http://localhost/upload
-//U:  curl -F 'file=@\Users\VRM\Pictures\leon.jpg' -F 'file2=@\Users\VRM\Pictures\gorila.jpg' -F 'file3=@\Users\VRM\Pictures\guepardo.jpg' -F 'file4=@\Users\VRM\Pictures\leon2.jpg' -F 'file5=@\Users\VRM\Pictures\rinoceronte.jpg' http://localhost:8080/api/mission/misionDaniel
-app.post('/api/missions/:missionId',(req,res) => {	
-	//console.log(JSON.stringify(req.headers))
-	console.log(JSON.stringify(req.body));
-	//console.log(req.files);
-    
-	try{ 
-		if(!req.files){  return res.status(400); }
-		//A: sino me mandaron nigun file devolvi 400
-		var files = [];
-		var fileKeys = Object.keys(req.files);
-
-		fileKeys.forEach(function(key) {
-			files.push(req.files[key]);
-		});
-		files.forEach(archivo => {
-			var rutaArchivo = rutaCarpeta(req.params.missionId, archivo.name,true);
-			//A: ruta carpeta limpia path (que no tenga .. exe js )
-			//A : el tamaño maximo se controla con CfgUploadSzMax	
-			archivo.mv( rutaArchivo, err => {
-				if (err) { return res.send(err); }
-				//A: mostrar hash del archivo
-				fileHash(rutaArchivo).then((hash) => { 
-					console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
-				});
-				
-			});	
-		});
-		return res.status(200).send('OK '); //TODO: enviar tambien HASH
-		
-	}catch (err) {
-	  res.status(500).send(err);
-	}
-});
-
-//U: devuelve los nombres de todos los archivos dentro de un mision
-app.get('/api/missions/:missionId',(req,res) => {
-	var r = new Array();
-	var rutaMision = rutaCarpeta(req.params.missionId,null,false);
-	if (rutaMision == null){
-		//res.sendStatus(404).send("no existe la mision");
-		console.log("no hay mision");
-		res.send("no existe la mision");
-	}else{
-		fs.readdirSync(rutaMision).forEach(file => {
-			r.push(file);
-		});
-		res.set('missionId', req.params.missionId);	
-		res.send(r);
-	}
-});
-
-//U: mediante GET se pide un archivo especifico de una mision especifica
-//curl "http://localhost:8888/api/mission/misionDaniel/leon.jpg"
-app.get('/api/missions/:missionId/:file',(req,res) => {	
-	var rutaArchivo = rutaCarpeta( CfgDbBaseDir,req.params.missionId, req.params.file,false);
-	if (fs.existsSync(rutaArchivo)){
-		console.log(req.params.file);
-		res.set('fileName', req.params.file);	
-		res.status(200).sendFile(path.resolve(rutaArchivo)); //res.sendfile consider "../" como corrupto
-	}else{
-		res.status(404).send("no file or Mission");
-	}
-});
-
-*/
 //--------------------------------------NUEVAS APIS-------------------------------------
 
 //U: devuelve todos los protocolos existentes
@@ -375,8 +323,8 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 				fileHash(rutaArchivo).then((hash) => { 
 					console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
 					hashInfo.push( {[file.name] : [hash]} );
+					console.log(hashInfo)
 				});
-				
 			});	
 		});
 		return res.status(200).send({'status': 'ok', 'hashes': hashInfo}); //TODO: enviar tambien HASH
@@ -385,9 +333,12 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 	  res.status(500).send(err);
 	}
 });
+app.post('/api/protocols/:protocolsId',(req,res) => {
+	//la ruta es dentro de protocols / protocoldid
+	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
 
-app.get('/api/protocols/protocolsInfo',(req,res) => {
-	var ruta 
+	guardarArchivos(req.files,ruta);
+	res.send('ok');
 })
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
