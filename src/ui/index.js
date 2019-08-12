@@ -1,5 +1,8 @@
 function misiones_P() {
-  return fetch('/api/mission').then(res => res.json())
+  return fetch('/api/missions').then(res => res.json())
+}
+function protocols_P() {
+  return fetch('/api/protocols').then(res => res.json())
 }
 
 //Funciones
@@ -30,10 +33,11 @@ function crearMision(my) {
     "description": my.state.descripcion ||  "sin descripcion",
     "meta": my.state.fechaExpiracion || "sin fecha caducidad",
     "status":"sin iniciar",
-    "nombreCarpeta": my.state.missionId
+    "protocolId": my.state.missionId
   }
   //TODO: sin funciona hacerlo funcion
-  var url = "http://localhost:8080/api/mission/" + my.state.missionId;// url to the server side file that will receive the data.
+  //'/api/protocols/:protocolsId'
+  var url = "http://localhost:8080/api/protocols/" + my.state.missionId;// url to the server side file that will receive the data.
   var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
   var formData = new FormData();
   //archivos
@@ -59,7 +63,7 @@ function crearMision(my) {
   //--------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------
-//U: componente que la primer pagina y que muestra las misiones Activas
+//U: componente que que muestra la misiones de un protocolo
 uiMissions= MkUiComponent(function uiMissions(my) {
   XAPP = my;//A:para debug accesible desde la consola
   
@@ -74,8 +78,6 @@ uiMissions= MkUiComponent(function uiMissions(my) {
   
   my.render= function (props, state) {
     var misionesItems;
-    var nombreCarpeta = state.nombreCarpeta;
-    var nombreArchivos = state.nombreArchivos;
     if (state.misiones){
       /*
 		{
@@ -95,7 +97,11 @@ uiMissions= MkUiComponent(function uiMissions(my) {
           status: estaMision.status,
           extra: h('div',{},
             h(Icon,{name: 'sign language', color: colorMision(estaMision.status)}),//A: cambia segun status
-            h(Button,{onClick: () =>preactRouter.route("missions/" + estaMision.missionId)},'ver detalle')
+            h(Button,{onClick: () =>preactRouter.route("missions/" +estaMision.protocolId + '/' + estaMision.missionId)},'ver detalle'),
+            h(Label, {color:'blue'},
+              "Protocolo: ",
+              h(Label.Detail,{}, estaMision.protocolId)
+            )
           ),
         }
       }); 
@@ -119,11 +125,59 @@ uiMissions= MkUiComponent(function uiMissions(my) {
   }
 });
 
+//U: componente muestra los protocolos
+uiProtocols= MkUiComponent(function uiProtocols(my) {
+  XAPP = my;//A:para debug accesible desde la consola
+
+  //VER: https://preactjs.com/guide/api-reference
+  my.componentDidMount = function () {
+    protocols_P().then( res => my.setState({misiones: res}));
+    //A: la primera vez que se dibuja, busco las misiones y las guardo en mi state, se redibuja
+  }
+  
+  my.render= function (props, state) {
+    var misionesItems;
+    if (state.misiones){
+      // { CARD GROUP
+      //   header: 'Project Report - April',
+      //   description: 'Leverage agile frameworks to provide a robust synopsis for high level overviews.',
+      //   meta: 'ROI: 30%',
+      // },
+      misionesItems= state.misiones.map(estaMision => {
+        return {
+          header: estaMision.header,
+          description: estaMision.description,
+          meta: estaMision.meta,
+          //extra: 
+        }
+      }); 
+    }
+    //A: converir de expediente a lo que necesita semantic ui
+    return (
+      h(Container,{},
+        h(Header,{as:'h2', icon: true},
+          h(Icon, {name: 'settings'}),
+          "protocolos disponibles",
+          h(Header.Subheader,{ },"la lista de protocolos representa todos los protocolos disponibles y en existencia en nuestra base de datos")
+        ),
+        h('div', {id:'app', style: {display: state.wantsCfg ? 'none' : 'block' }},
+        misionesItems ? 
+					misionesItems.length>0 ?
+         		h(Card.Group, {items: misionesItems,},) 
+            :
+						h('div',{},'No hay ninguna misión todavía')
+					:
+           h('div',{},'cargando')),
+        //-----------------------------------------------------
+		));
+  }
+});
 //U: componente que muestra los archivos de una mision
 uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
   
   my.componentWillMount = function () {
-    fetch('/api/mission/' + this.props.missionId)
+    ///api/protocols/:protocolId/missions/:missionId
+    fetch('/api/protocols/' + this.props.protocolId + '/missions/' + this.props.missionId)
       .then(function(res) {
         return res.json();
       })
@@ -131,6 +185,11 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
         my.setState({nombreArchivos: myJson})
       });
   }
+  // <Header as='h2' icon>
+  //   <Icon name='settings' />
+  //   Account Settings
+  //   <Header.Subheader>Manage your account settings and set e-mail preferences.</Header.Subheader>
+  // </Header>
   my.render = function(props,state){
     return(
         //U: mostrar lista de los archivos de una mision
@@ -138,10 +197,11 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
         state.nombreArchivos ? 
 					state.nombreArchivos.length>0 ?(
             h('div',{},
-              h(Button,{onClick: () =>preactRouter.route("/")},"volver"),
+              h(Button,{onClick: () =>preactRouter.route("/missions")},"volver"),
               h('ul',{},
               state.nombreArchivos.map( nombreArchivo =>
-                h('li',{},h('a',{href: `http://localhost:8080/api/mission/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo))
+                //'/api/protocols/:protocolId/missions/:missionId/:file'
+                h('li',{},h('a',{href: `http://localhost:8080/api/protocols/${this.props.protocolId}/missions/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo))
               ))
             )
           )
@@ -154,7 +214,7 @@ uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
 });
 
 //U: componente que muestra un formulario y crea un mision nueva (se pueden subir archivos)
-uiCreateMission= MkUiComponent(function uiCreateMission(my) {
+uiCreateProtocol= MkUiComponent(function uiCreateProtocol(my) {
 	my.render= function () {
     return h('div',{},
       h('h1',{},"Proximamanete formulario"),
@@ -181,9 +241,7 @@ uiCreateMission= MkUiComponent(function uiCreateMission(my) {
 //U:Componente que permite cambiar el theme de la pagina
 uiCfg= MkUiComponent(function uiCfg(my) {
   var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
-              .split(' ');
-  
-    
+              .split(' '); 
 	my.render= function () {
     return (
 			h('div', {id:'app'},
@@ -202,9 +260,10 @@ uiCfg= MkUiComponent(function uiCfg(my) {
 
 //U: las rutas que contiene mi web app
 Rutas= {
-	"/": {cmp: uiMissions},
-  "/missions/:missionId": {cmp: uiMissionFiles},
-  "/missions/createMission": {cmp: uiCreateMission}
+  "/":{cmp: uiProtocols},
+	"/missions": {cmp: uiMissions},
+  "/missions/:protocolId/:missionId": {cmp: uiMissionFiles},
+  "/protocol/createProtocol": {cmp: uiCreateProtocol}
 }
 
 app_style= { //U: CSS especifico para la aplicacion
@@ -212,14 +271,33 @@ app_style= { //U: CSS especifico para la aplicacion
 	'height': '100%', /* You must set a specified height */
 };
 
+uiMenu= MkUiComponent(function uiMenu(my) {
+  handleItemClick = (e, { name }) => my.setState({ activeItem: name }) 
+  my.state= {
+    activeItem: 'review'
+  }
+  const items = [
+    { key: 'protocolos',  name: 'protocolos',onClick: ()=> {handleItemClick; preactRouter.route("/")}},
+    { key: 'misiones', name: 'misiones',onClick: ()=> {handleItemClick; preactRouter.route("/missions") }},
+    { key: 'nuevoProtocolo',  name: 'Nueva protocolo', onClick: ()=> {handleItemClick; preactRouter.route("/protocol/createProtocol")} },  
+  ]
+    
+	my.render= function () {
+    return (
+			//h(Container, {id:'app'},
+				h(Menu,{items: items},)
+      //)
+    )
+	}
+});
+// const MenuExampleProps = () => <Menu items={items} />
 
 App= MkUiComponent(function App(my) {
   my.render= function (props, state) {
     return (
-			h(Container, {id:'app', style: app_style},
-        //h(uiCfg), //A: ofrezco un boton de config para cambiar el tema
+      h(Container, {id:'app', style: app_style},
+        h(uiMenu,{},),
         h(uiCfg,{},),
-        h(Button,{floated:'right', basic:true, color:'blue', content:'New mission', icon:'fork', onClick: () =>preactRouter.route("/missions/createMission")}),
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
 						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
