@@ -195,9 +195,15 @@ app.get('/api/protocols',(req,res) => {
   
 	fs.readdir(CfgDbBaseDir, function(err, carpetas) {
 		if (err) res.status(500).send('error reading folders');
-
+		
 		carpetas= carpetas || []; //A: puede no venir ninguna
-		res.status(200).send(carpetas);
+		carpetas.forEach(protocolo => {
+			ruta = rutaCarpeta(CfgDbBaseDir,protocolo,null,'index.json',false);
+			if(fs.existsSync(ruta)){
+				r.push(leerJson(ruta))
+			}
+		});
+		res.status(200).send(r);
 	})
 })
 
@@ -246,7 +252,7 @@ app.get('/api/protocols/:protocolId/:file',(req,res) => {
 	}
 });
 
-//U: se devuelven todas las misiones de todos los protocoles 
+//U: se devuelven todas las misiones de todos los protocolos 
 app.get('/api/missions',(req,res) => {
 	var r = new Array();
 	var carpetaProtocolos = CfgDbBaseDir; //tgn/protocols
@@ -260,7 +266,10 @@ app.get('/api/missions',(req,res) => {
 				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
 					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
 						mision = mision || [];
-						r.push(mision);
+						ruta = rutaCarpeta(rutaProtocoloMision,mision,null,'state.json',false);
+						if(fs.existsSync(ruta)){
+							r.push(leerJson(ruta))
+						}	
 					});
 				}
 			}
@@ -314,6 +323,7 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 			files.push(req.files[key]);
 		});
 		files.forEach(archivo => {
+			var fileName = archivo.name;
 			var rutaArchivo = rutaCarpeta(CfgDbBaseDir , protocolsId,missionId, archivo.name,true);
 			//A: ruta carpeta limpia path (que no tenga .. exe js )
 			//A : el tamaño maximo se controla con CfgUploadSzMax	
@@ -322,7 +332,7 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 				//A: mostrar hash del archivo
 				fileHash(rutaArchivo).then((hash) => { 
 					console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
-					hashInfo.push( {[file.name] : [hash]} );
+					hashInfo.push( {[fileName] : [hash]} );
 					console.log(hashInfo)
 				});
 			});	
