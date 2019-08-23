@@ -1,5 +1,7 @@
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
 CfgDbBaseDir = 'TGN/protocols'; //A: los protocolos se encuentran aqui
+CfgBlkDataSetDir = 'BLK/dataset';
+CfgBlkProtocolDir = 'BLK/protocols'
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
 
 //----------------------------------------------------------
@@ -37,7 +39,47 @@ function net_interfaces() { //U: conseguir las interfases de red
 	// eth0 -> 10.0.0.101
 	return r;
 }
+function leerMisiones (rutaOrigen){
+	var r = new Array();
+	fs.readdirSync(rutaOrigen).forEach(protocolo => {
+		protocolo = protocolo || [];
+		var rutaProtocolo = path.join(rutaOrigen,protocolo);
+		console.log(rutaProtocolo)
+		fs.readdirSync(rutaProtocolo).forEach(file => {
+			file = file || [];
+			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
+				var rutaProtocoloMision = path.join(rutaProtocolo,file);
+				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
+					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
+						mision = mision || [];
+						ruta = rutaCarpeta(rutaProtocoloMision,mision,null,'state.json',false);
+						if(fs.existsSync(ruta)){
+							r.push(leerJson(ruta))
+						}	
+					});
+				}
+			}
+		});
+	});
+	return r;
+}
 
+//recibe una ruta y lee todos los archivos con nombre 'index.json' 
+function leerJsonProtocols (ruta,callback) {
+	var r = new Array();
+	fs.readdir(ruta, function(err, carpetas) {
+		if (err) res.status(500).send('error reading folders');
+		
+		carpetas= carpetas || []; //A: puede no venir ninguna
+		carpetas.forEach(protocolo => {
+			ruta = rutaCarpeta(CfgDbBaseDir,protocolo,null,'index.json',false);
+			if(fs.existsSync(ruta)){
+				r.push(leerJson(ruta))
+			}
+		});
+		callback(r)
+	})
+}
 
 function leerJson(ruta){
 	return JSON.parse(fs.readFileSync(ruta));
@@ -138,11 +180,11 @@ function leerContidoCarpeta (ruta, omitirNombre){
 	return r;
 }
 
-function guardarArchivos(arrayArchivos,ruta){
+function guardarArchivos(arrayArchivos,ruta,callback){
 	var files = [];
 	var fileKeys = Object.keys(arrayArchivos);
 	var hashInfo = new Array();
-
+	var counter = 0;
 	fileKeys.forEach(function(key) {
 		files.push(arrayArchivos[key]);
 	});
@@ -154,14 +196,33 @@ function guardarArchivos(arrayArchivos,ruta){
 		archivo.mv( rutaArchivo, err => {
 			//A: mostrar hash del archivo
 			fileHash(rutaArchivo).then((hash) => { 
+				counter++;
 				console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
 				hashInfo.push( {[archivo.name] : hash} );
+				if(counter == files.length){
+					callback(hashInfo)
+				}
 			})
 		})
 	});	
 }
 //--------------------------------------------------------------------
 var app = express();
+// Add headers
+app.use(function (req, res, next) {
+
+    // Website you wish to allow to connect
+    res.setHeader('Access-Control-Allow-Origin', 'http://192.168.1.199:8888');
+    // Request methods you wish to allow
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+    // Request headers you wish to allow
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
+
+    // Pass to next layer of middleware
+    next();
+});
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload({
 	abortOnLimit: true,
@@ -191,21 +252,10 @@ app.get('/', function(req, res) {
 //U: devuelve todos los protocolos existentes
 //curl "http://localhost:8888/api/protocols"
 app.get('/api/protocols',(req,res) => {
-	var r = new Array();
-  
-	fs.readdir(CfgDbBaseDir, function(err, carpetas) {
-		if (err) res.status(500).send('error reading folders');
-		
-		carpetas= carpetas || []; //A: puede no venir ninguna
-		carpetas.forEach(protocolo => {
-			ruta = rutaCarpeta(CfgDbBaseDir,protocolo,null,'index.json',false);
-			if(fs.existsSync(ruta)){
-				r.push(leerJson(ruta))
-			}
-		});
-		res.status(200).send(r);
+	leerJsonProtocols(CfgDbBaseDir, function(vector){
+		res.send(vector)
 	})
-})
+});
 
 
 //U: devuelve los nombres de todos los archivos dentro de un protocolo
@@ -218,7 +268,7 @@ app.get('/api/protocols/:protocolId',(req,res) => {
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		res.set('protocolId', protocolId);	
-		res.send(leerContidoCarpeta(ruta,missions)); //A: la carpeta mission no la consideramos como archivos
+		res.send(leerContidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
 	}
 });
 
@@ -242,7 +292,7 @@ app.get('/api/protocols/:protocolId/missions',(req,res) => {
 //U: mediante GET se pide un archivo especifico de un protocolo especifico
 //curl "http://localhost:8888/api/protocols/chekearFiltros/sample.txt"
 app.get('/api/protocols/:protocolId/:file',(req,res) => {	
-	var rutaArchivo = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, req.params.file,false);
+	var rutaArchivo = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null,req.params.file,false);
 	if (fs.existsSync(rutaArchivo)){
 		console.log("archivo pedido: ", req.params.file);
 		res.set('fileName', req.params.file);	
@@ -254,28 +304,8 @@ app.get('/api/protocols/:protocolId/:file',(req,res) => {
 
 //U: se devuelven todas las misiones de todos los protocolos 
 app.get('/api/missions',(req,res) => {
-	var r = new Array();
-	var carpetaProtocolos = CfgDbBaseDir; //tgn/protocols
-	fs.readdirSync(carpetaProtocolos).forEach(protocolo => {
-		protocolo = protocolo || [];
-		var rutaProtocolo = path.join(carpetaProtocolos,protocolo);
-		fs.readdirSync(rutaProtocolo).forEach(file => {
-			file = file || [];
-			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
-				var rutaProtocoloMision = path.join(rutaProtocolo,file);
-				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
-					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
-						mision = mision || [];
-						ruta = rutaCarpeta(rutaProtocoloMision,mision,null,'state.json',false);
-						if(fs.existsSync(ruta)){
-							r.push(leerJson(ruta))
-						}	
-					});
-				}
-			}
-		});
-	});
-	res.send(r);
+	r = leerMisiones(CfgDbBaseDir);
+	res.send (r)
 });
 
 
@@ -285,7 +315,7 @@ app.get('/api/protocols/:protocolId/missions/:missionId',(req,res) => {
 	
 	if (!ruta) res.status(400).send('not file or directory');
 	else{
-		var nombreArchivos = leerContidoCarpeta(ruta,'leon.jpg');
+		var nombreArchivos = leerContidoCarpeta(ruta);
 		res.status(200).send(nombreArchivos);
 	}
 })
@@ -312,44 +342,122 @@ app.get('/api/protocols/:protocolId/missions/:missionId/:file',(req,res) => {
 app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {	
 	var protocolsId = req.params.protocolsId;
 	var missionId = req.params.missionId;
-	var hashInfo = new Array();
-	try{ 
-		if(!req.files){  return res.status(400); }
-		//A: sino me mandaron nigun file devolvi 400
-		var files = [];
-		var fileKeys = Object.keys(req.files);
 
-		fileKeys.forEach(function(key) {
-			files.push(req.files[key]);
-		});
-		files.forEach(archivo => {
-			var fileName = archivo.name;
-			var rutaArchivo = rutaCarpeta(CfgDbBaseDir , protocolsId,missionId, archivo.name,true);
-			//A: ruta carpeta limpia path (que no tenga .. exe js )
-			//A : el tamaño maximo se controla con CfgUploadSzMax	
-			archivo.mv( rutaArchivo, err => {
-				if (err) { return res.send(err); }
-				//A: mostrar hash del archivo
-				fileHash(rutaArchivo).then((hash) => { 
-					console.log("mission upload: " + rutaArchivo + " tamaño archivo: " + archivo.size + " hash archivo: " + hash);
-					hashInfo.push( {[fileName] : [hash]} );
-					console.log(hashInfo)
-				});
-			});	
-		});
-		return res.status(200).send({'status': 'ok', 'hashes': hashInfo}); //TODO: enviar tambien HASH
-		
-	}catch (err) {
-	  res.status(500).send(err);
-	}
+	if(!req.files){  return res.status(400); }
+	//A: sino me mandaron nigun file devolvi 400
+	var ruta = rutaCarpeta(CfgDbBaseDir,protocolsId,missionId,null,true);
+	guardarArchivos(req.files,ruta,function(vectorHashes){
+		return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+	})
 });
 app.post('/api/protocols/:protocolsId',(req,res) => {
 	//la ruta es dentro de protocols / protocoldid
 	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
-
 	guardarArchivos(req.files,ruta);
 	res.send('ok');
 })
+
+//---------------------------------------BLK APIS------------------------------------
+
+//devuelva la lista con los nombres de archivos que estan dentro de la carpeta blk/dataset
+// http://192.168.1.199:8888/api/blk/dataset
+app.get('/api/blk/dataset',(req,res) => {
+	res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions')); //A: la carpeta mission no la consideramos como archivos
+});
+
+//devuelve un archivo que esta dentro de la carpeta blk/dataset
+//http://192.168.1.199:8888/api/blk/dataset/prueba1.json
+app.get('/api/blk/dataset/:datasetId',(req,res) => {
+	datasetId = req.params.datasetId;
+	var ruta = rutaCarpeta(CfgBlkDataSetDir,datasetId,null,null,false);
+	console.log(ruta)
+	if (ruta){
+		res.sendFile(  path.resolve(ruta) )
+	}else{
+		res.send('not file in the dataset main folder')
+	}
+})
+
+//devuelve un array con los JSON de todos los protocolos
+// http://192.168.1.199:8888/api/blk/protocols
+app.get('/api/blk/protocols',(req,res) => {
+	leerJsonProtocols(CfgBlkProtocolDir, function(vector){
+		res.send(vector)
+	})
+});
+
+//devuelve una lista con los nombres de los archivos dentro de blk/protocols/porcolID
+// http://192.168.1.199:8888/api/blk/protocols/revisarFiltros
+app.get('/api/blk/protocols/:protocolsId',async (req,res) => {
+	var protocolId = req.params.protocolsId;
+	var rutaMision = rutaCarpeta(CfgBlkProtocolDir,protocolId,null,null,false);
+	if (rutaMision == null){
+		res.status(404).send("protocol "+ protocolId+" does not exists");
+	}else{
+		res.set('protocolId', protocolId);	
+		res.send(leerContidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
+	}
+});
+
+//U: mediante GET se pide un archivo especifico de un protocolo especifico
+// http://192.168.1.199:8888/api/blk/protocols/revisarFiltros/engine.jpg
+app.get('/api/blk/protocols/:protocolId/:file',async (req,res) => {
+	var rutaArchivo = rutaCarpeta(CfgBlkProtocolDir, req.params.protocolId, null,req.params.file,false);
+	if (fs.existsSync(rutaArchivo)){
+		console.log("archivo pedido: ", req.params.file);
+		res.set('fileName', req.params.file);	
+		res.status(200).sendFile(path.resolve(rutaArchivo)); //res.sendfile considera "../" como corrupto
+	}else{
+		res.status(404).send("no file or Mission");
+	}
+});
+
+//U: se devuelven todas las misiones de todos los protocolos
+// http://192.168.1.199:8888/api/blk/missions
+app.get('/api/blk/missions',(req,res) => {
+	
+	r = leerMisiones(CfgBlkProtocolDir);
+	res.send(r);
+});
+
+//U: se devuelve los nombres de los archivos que estan dentro de una mision
+//http://192.168.1.199:8888/api/blk/protocols/revisarFiltros/missions/mission341
+app.get('/api/blk/protocols/:protocolId/missions/:missionId',(req,res) => {
+	var ruta = rutaCarpeta(CfgBlkProtocolDir,req.params.protocolId,req.params.missionId,null,false);
+	
+	if (!ruta) res.status(400).send('not file or directory');
+	else{
+		var nombreArchivos = leerContidoCarpeta(ruta);
+		res.status(200).send(nombreArchivos);
+	}
+})
+
+//nos envian via POST uno o varios archivos de una mission
+app.post('/api/blk/protocols/:protocolsId/missions/:missionId',(req,res) => {	
+	var protocolsId = req.params.protocolsId;
+	var missionId = req.params.missionId;
+
+	if(!req.files){  return res.status(400); }
+	//A: sino me mandaron nigun file devolvi 400
+	var ruta = rutaCarpeta(CfgBlkProtocolDir,protocolsId,missionId,null,true);
+	guardarArchivos(req.files,ruta,function(vectorHashes){
+		return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+	})
+});
+
+//se envian uno o mas archivos y se guardan en blk/protocols/:protocolsId
+app.post('/api/blk/protocols/:protocolsId',(req,res) => {
+	//la ruta es dentro de protocols / protocoldid
+	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
+	if (req.files) {
+		guardarArchivos(req.files,ruta);
+		res.send('ok');			
+	}else{
+		res.send('not files')
+	}
+})
+
+//-----------------------------------------------------------------------------------
 //SEE: listen for requests :)
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
