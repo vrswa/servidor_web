@@ -350,11 +350,18 @@ app.post('/api/protocols/:protocolsId/missions/:missionId',(req,res) => {
 		return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
 	})
 });
+
 app.post('/api/protocols/:protocolsId',(req,res) => {
 	//la ruta es dentro de protocols / protocoldid
 	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
-	guardarArchivos(req.files,ruta);
-	res.send('ok');
+	if (req.files) {
+		guardarArchivos(req.files,ruta,function(vectorHashes){
+			return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+		})		
+	}else{
+		res.send('not files')
+	}
+	
 })
 
 //---------------------------------------BLK APIS------------------------------------
@@ -412,7 +419,7 @@ app.get('/api/blk/protocols/:protocolId/:file',async (req,res) => {
 	}
 });
 
-//U: se devuelven todas las misiones de todos los protocolos
+//U: se devuelven los datos de los JSON de todas la misiones
 // http://192.168.1.199:8888/api/blk/missions
 app.get('/api/blk/missions',(req,res) => {
 	
@@ -450,8 +457,9 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 	//la ruta es dentro de protocols / protocoldid
 	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
 	if (req.files) {
-		guardarArchivos(req.files,ruta);
-		res.send('ok');			
+		guardarArchivos(req.files,ruta,function(vectorHashes){
+			return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+		})		
 	}else{
 		res.send('not files')
 	}
