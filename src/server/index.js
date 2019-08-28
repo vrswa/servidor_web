@@ -68,19 +68,20 @@ function leerMisiones (rutaOrigen){
 	return r;
 }
 
-//descarga un archivo de una url y lo guarda en un destino recibe un callback cuando finaliza
-function download(url, dest, cb) {
-    const file = fs.createWriteStream(dest);
-    const request = https.get(url, function (response) {
-        response.pipe(file);
-        file.on('finish', function () {
-            file.close(cb);  // close() is async, call cb after close completes.
-        });
-	}).on('error', function (err) { // Handle errors
-        fs.unlink(dest); // Delete the file async. (But we don't check the result)
-        if (cb) cb(err.message);
-    });
-};
+//VER: descarga un archivo de una url y lo guarda en un destino recibe un callback cuando finaliza
+const downloadFile = (async (url, path) => {
+	const res = await fetch(url);
+	const fileStream = fs.createWriteStream(path);
+	await new Promise((resolve, reject) => {
+		res.body.pipe(fileStream);
+		res.body.on("error", (err) => {
+		  reject(err);
+		});
+		fileStream.on("finish", function() {
+		  resolve();
+		});
+	  });
+  });
 
 //recibe una ruta y lee todos los archivos con nombre 'index.json' 
 function leerJsonProtocols (ruta,callback) {
@@ -223,13 +224,15 @@ function githubFiles (url,savePath,callback){
 	fetch(url)
     .then(res => res.json())
 	.then(infoArchivos => {
-			counter = 0;
+			savedFileCounter = 0; 
 			infoArchivos.forEach( function(info){
-				counter ++;
-				download(info.download_url,`${savePath}/${info.name}`,(err) => err ? console.log(err) : console.log("todo ok"))
-				if(counter == infoArchivos.length){
-					callback();
-				}
+				downloadFile(info.download_url,`${savePath}/${info.name}`).then( () => {	
+						savedFileCounter ++;
+						if(savedFileCounter == infoArchivos.length){	
+							callback();
+						}
+					}
+				)
 			})
 		}
 	);
@@ -301,8 +304,9 @@ app.get('/api/protocols',(req,res) => {
 app.get('/api/github',(req,res) => {
 	var url =  "https://raw.githubusercontent.com/vrswa/portalBLK/master/DataSets/pruebaBorrame.json";
 	var url2 = "https://raw.githubusercontent.com/vrswa/portalBLK/master/Protocols/Demo/Demo.lua";
-	download(url,`BLK/dataset/pepito.txt`,() => res.send('ok') );
-	
+	nombre = 'prueba.json'
+	//download(url,`./prueba.jsn`,() => res.send('ok') );
+	downloadFile(url,`${CfgBlkDataSetDir}/pruebaBorrame.json`).then( () => res.send('salio bien?'));
 }); 
 
 //U: devuelve los nombres de todos los archivos dentro de un protocolo
@@ -331,7 +335,6 @@ app.get('/api/protocols/:protocolId/missions',(req,res) => {
 
 	var nombreMisiones = leerContidoCarpeta(ruta,null);
 	res.status(200).send(nombreMisiones);
-
 })
 
 
