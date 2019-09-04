@@ -1,387 +1,290 @@
-PORT = 8080;
+SERVERIP = 'http://192.168.1.196:8888';
+var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
+              .split(' ');
+var app_style= {};
 
-function misiones_P() {
-  return fetch('/api/missions').then(res => res.json())
-}
-
-function protocols_P() {
-  return fetch('/api/protocols').then(res => res.json())
-}
-
-// Funciones
 function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
-function onCfg(my) { //U: puedo definir funciones que se llamen desde otras aca adentro
-  my.setState({wantsCfg: !my.state.wantsCfg}); //A: cuando llamo my.setState se vuelve a dibujar el componente con render
-  //A: como puse !my.state.wantsCfg si era false la cambia a true, si era true la cambia a false
-}
 
-//U: pone el color para tres estados posibles "sin iniciar, iniciado, completado"
-function colorMision( status){
-  if (status === 'sin iniciar')
-    return 'red';
-  else if (status === 'iniciado'){
-    return 'yellow'
-  }
-  return 'green';
-}
-
-//U: con el input del form crea y envia un json con la informacion de la mision
-function crearMision(my) {
-  //my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: formulario animacion cargando
-  var data = {
-    "header": my.state.nombre,
-    "description": my.state.descripcion ||  "sin descripcion",
-    "meta": my.state.fechaExpiracion || "sin fecha caducidad",
-    "status":"sin iniciar",
-    "protocolId": my.state.missionId
-  }
-  //TODO: sin funciona hacerlo funcion
-  //'/api/protocols/:protocolsId'
-  var url = "http://localhost:8080/api/protocols/" + my.state.missionId;// url to the server side file that will receive the data.
-  var index = new Blob([JSON.stringify(data)], { type: "application/octet-stream"});
-  var formData = new FormData();
-  //archivos
-  var archivos = document.getElementById("files");
-  console.log(archivos.files);
-  for (var i = 0; i < archivos.files.length; i++) {
-    formData.append(`file${i}`,archivos.files[i],archivos.files[i].name);
-  }
-  formData.append("index",index,"index.json");
-  var request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (request.readyState == XMLHttpRequest.DONE) {
-        if(request.responseText == 'ok'|| 'OK'){
-          my.setState({missionUploadOk: !my.state.missionUploadOk}); //A: activar cartel envio ok
-          setTimeout(function(){ my.setState({missionUploadOk: !my.state.missionUploadOk}); console.log("asd")}, 4000) //A:despues de 4 segundos sacar cartel
-          console.log("ok ");
-        }
-    }
+//COMPONENTE DE LOGIN
+uiLogin = MkUiComponent (function uiLogin(my){
+  my.componentWillMount = function () {
+    var body = document.getElementsByTagName('body')[0];
+    body.style.backgroundImage = 'url(fondo.jpg)';
   }
 
-  request.open("POST", url);
-  request.send(formData)
-  //--------------------------------------------------------------------------------------------
-}
-//---------------------------------------------------------------------
-//U: Componente que muestra todas las misiones 
-uiMissions= MkUiComponent(function uiMissions(my) {
-  XAPP = my;//A:para debug accesible desde la consola
-  
-  my.colorMision = colorMision;
-  my.state.missionUploadOk = true;
-  my.onCfg = onCfg;
-  //VER: https://preactjs.com/guide/api-reference
-  my.componentDidMount = function () {
-    misiones_P().then( res => my.setState({misiones: res}));
-    //A: la primera vez que se dibuja, busco las misiones y las guardo en mi state, se redibuja
+  my.render = function(){
+    return (
+      h(Grid,{textAlign:'center', style:{ height: '100vh' }, verticalAlign:'middle'},
+        h(Grid.Column, {style: {maxWidth: 450}}, 
+          h(Header, {as:'h2', color:'teal', textAlign:'center',style: {'font-size':'25px'}},
+            //<Image src='/logo.png' /> Log-in to your account
+            h(Image,{src:'logoGrande.jpg',style: {'height':'60px!important'}},),
+            "Log-in to your account",
+          ),
+          h(Form,{size:'large'},
+            h(Segment,{stacked:true},
+              h(Form.Input,{fluid:true, icon:'user', iconPosition:'left', placeholder:'E-mail address'}),
+              h(Form.Input,{ fluid:true, icon:'lock',iconPosition:'left',placeholder:'Password',type:'password'}),
+              h(Button,{color:'blue', fluid:true,size:'large',onClick: () =>preactRouter.route("/menu")},"Login")
+            )
+          )  
+        )
+      )
+    )
   }
-  
+});
+
+//menu principal de la parte superior 
+uiMenu= MkUiComponent(function uiMenu(my) {
+  handleItemClick = (e, { name }) => {my.setState({ activeItem: name });} 
+  my.state= {
+    activeItem: 'itemA'
+  }
+
   my.render= function (props, state) {
-    var misionesItems;
-    if (state.misiones){
-      /*
-		{
-		  childKey: 0,
-		  image: '../mision/misionA/misionA3.jpg',
-		  header: 'arreglar tablero X',
-		  description: 'Description',
-		  meta: 'Metadata',
-		  status: 'terminado',
-		},
-    */
-      misionesItems= state.misiones.map(estaMision => {
-        return {
-          header: estaMision.header,
-          description: estaMision.description,
-          meta: estaMision.meta,
-          status: estaMision.status,
-          extra: h('div',{},
-            h(Icon,{name: 'sign language', color: colorMision(estaMision.status)}),//A: cambia segun status
-            h(Button,{onClick: () =>preactRouter.route("missions/" +estaMision.protocolId + '/' + estaMision.missionId)},'ver detalle'),
-            h(Label, {color:'blue'},
-              "Protocolo: ",
-              h(Label.Detail,{}, estaMision.protocolId)
+    return (
+      h(Menu,{item:true,stackable:true},
+        h(Menu.Item,{name: 'itemA',onClick: () => handleItemClick },"Consulta"),
+        h(Menu.Item,{name: 'itemB',onClick: () => handleItemClick},"Reportes"),
+        h(Dropdown, {name: 'itemC',onClick: () => handleItemClick,item:true, text:'Nuestro Menu'},
+          h(Dropdown.Menu,{},
+            h(Dropdown.Item,{},'item A'),
+            h(Dropdown.Item,{},'item B'),
+            h(Dropdown.Item,{},'item C')  
+          )
+        ),
+        h(Menu.Menu,{position:'right'},
+          h(Menu.Item,{},
+            h(Label, {as:'a',color:'yellow' ,image: true},
+              h('img',{'src':'https://react.semantic-ui.com/images/avatar/small/christian.jpg'}),
+              'Bienvenido Tomas',
+              h(Label.Detail,{},'Inspector Aduanero')
             )
           ),
-        }
-      }); 
-    }
-    //A: converir de expediente a lo que necesita semantic ui
-
-    //U: esta funcion dibuja la pantalla, podes usar elementos de html (ej. 'div') o Semantic UI (ej. Button)
-    //el formato es h(elemento, propiedades, contenido1, contenido2, ...)
-    return (
-      h(Container,{},
-        h('div', {id:'app', style: {display: state.wantsCfg ? 'none' : 'block' }},
-        misionesItems ? 
-					misionesItems.length>0 ?
-         		h(Item.Group, {items: misionesItems,},) 
-            :
-						h('div',{},'No hay ninguna misión todavía')
-					:
-           h('div',{},'cargando')),
-        //-----------------------------------------------------
-		));
-  }
-});
-
-//U: componente que muestra los protocolos
-uiProtocols= MkUiComponent(function uiProtocols(my) {
-  XAPP = my;//A:para debug accesible desde la consola
-
-  //VER: https://preactjs.com/guide/api-reference
-  my.componentDidMount = function () {
-    protocols_P().then( res => my.setState({misiones: res}));
-    //A: la primera vez que se dibuja, busco las misiones y las guardo en mi state, se redibuja
-  }
-  
-  my.render= function (props, state) {
-    var misionesItems;
-    if (state.misiones){
-      // { CARD GROUP
-      //   header: 'Project Report - April',
-      //   description: 'Leverage agile frameworks to provide a robust synopsis for high level overviews.',
-      //   meta: 'ROI: 30%',
-      // },
-      misionesItems= state.misiones.map(estaMision => {
-        return {
-          header: estaMision.header,
-          description: estaMision.description,
-          meta: estaMision.meta,
-          extra:  h(Button,{onClick: () =>preactRouter.route("protocol/" +estaMision.protocolId),floated:"right"},'ver detalle'),
-        }
-      }); 
-    }
-    //A: converir de expediente a lo que necesita semantic ui
-    return (
-      h(Container,{},
-        h(Header,{as:'h2', icon: true},
-          h(Icon, {name: 'settings'}),
-          "protocolos disponibles",
-          h(Header.Subheader,{ },"la lista de protocolos representa todos los protocolos disponibles y en existencia en nuestra base de datos")
-        ),
-        h('div', {id:'app', style: {display: state.wantsCfg ? 'none' : 'block' }},
-        misionesItems ? 
-					misionesItems.length>0 ?
-         		h(Card.Group, {items: misionesItems,},) 
-            :
-						h('div',{},'No hay ninguna misión todavía')
-					:
-           h('div',{},'cargando')),
-        //-----------------------------------------------------
-		));
-  }
-});
-//U: componente que muestra los archivos de una mision
-uiMissionFiles = MkUiComponent( function uiMissionFiles(my) {
-  
-  my.componentWillMount = function () {
-    ///api/protocols/:protocolId/missions/:missionId
-    fetch('/api/protocols/' + this.props.protocolId + '/missions/' + this.props.missionId)
-      .then(function(res) {
-        return res.json();
-      })
-      .then(function(myJson) {
-        my.setState({nombreArchivos: myJson})
-      });
-  }
-  my.render = function(props,state){
-    return(
-        //U: mostrar lista de los archivos de una mision
-        h('div', {id:'archivos',},
-        state.nombreArchivos ? 
-					state.nombreArchivos.length>0 ?(
-            h('div',{},
-              h(Button,{onClick: () =>preactRouter.route("/missions")},"volver"),
-              h('ul',{},
-              state.nombreArchivos.map( nombreArchivo =>
-                //'/api/protocols/:protocolId/missions/:missionId/:file'
-                h('li',{},h('a',{href: `http://localhost:8080/api/protocols/${this.props.protocolId}/missions/${this.props.missionId}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo))
-              ))
-            )
+          h(Menu.Item,{},
+             h(Button, {negative:true,onClick: () =>preactRouter.route("/")},"salir" ),
+            //h(Button, {negative:true,onClick: () => {console.log("hola")}},"salir" ),
           )
-            :
-						h('div',{},'No hay ninguna archivo todavía')
-					:
-           h('div',{},'cargando'))   
-        //-----------------------------------------------------
-    )}
-});
-
-//U: componente que muestra los archivos de una mision o protocolo
-uiFiles = MkUiComponent( function uiFiles(my) {
-  var titulo;
-
-  if (this.props.missionId){
-    titulo = this.props.missionId;
-    var ruta = '/api/protocols/' + this.props.protocolId + '/missions/' + this.props.missionId;
-    var rutaCompleta = `http://localhost:${PORT}/api/protocols/${this.props.protocolId}/missions/${this.props.missionId}`;
-    var rutaPreact = "/missions";
-  }else{
-    titulo = this.props.protocolId;
-    var ruta =  '/api/protocols/' + this.props.protocolId;
-    var rutaCompleta = `http://localhost:${PORT}/api/protocols/${this.props.protocolId}`;
-    var rutaPreact = "/";
-  }
-
-  my.componentWillMount = function () {
-    ///api/protocols/:protocolId/missions/:missionId
-    fetch(ruta)
-      .then(function(res) {
-        return res.json();
-      })
-      .then(function(myJson) {
-        my.setState({nombreArchivos: myJson})
-      });
-  }
-
-  my.render = function(props,state){
-    return(
-        //U: mostrar lista de los archivos de una mision
-        h('div', {id:'archivos',},
-        h(),
-        state.nombreArchivos ? 
-					state.nombreArchivos.length>0 ?(
-            h('div',{},
-              h(Button,{onClick: () =>preactRouter.route(rutaPreact)},"volver"),
-              h(Header,{as:'h2',size:'huge', icon:'file text', content: `archivos de : ${titulo}` }),
-              h('ul',{},
-              state.nombreArchivos.map( nombreArchivo =>
-                //'/api/protocols/:protocolId/missions/:missionId/:file'
-                h('li',{},h('a',{href: `${rutaCompleta}/${nombreArchivo}`, style: {"margin-left": "5%"}},nombreArchivo))
-              ))
-            )
-          )
-            :
-						h('div',{},'No hay ninguna archivo todavía')
-					:
-           h('div',{},'cargando'))   
-        //-----------------------------------------------------
-    )}
-});
-
-//U: componente que muestra un formulario y crea un mision nueva (se pueden subir archivos)
-uiCreateProtocol= MkUiComponent(function uiCreateProtocol(my) {
-	my.render= function () {
-    return h('div',{},
-      h('h1',{},"Formulario nuevo Protocolo"),
-      h(Form,{success: my.state.missionUploadOk},
-        h(Form.Group, {widths: 'equal'},
-          h(Form.Input,{onInput: e => { this.setState ({ nombre: e.target.value})},required:true, value:my.state.nombre, fluid: true, label:'Protocol Name', placeholder:'protocol name'},),
-          h(Form.Input,{onInput: e => { this.setState ({ missionId: e.target.value})}, required:true,value:my.state.missionId, fluid: true, label:'protocol ID (folderName)', placeholder:'protocol ID'},),
-          h(Form.Input,{onInput: e => { this.setState ({ fechaExpiracion: e.target.value})},required:true, value:my.state.fechaExpiracion, fluid: true, label:'fecha expiracion', placeholder:'DD/MM/YYYY'},)
         ),
-        h(Form.TextArea,{onInput: e => { this.setState ({ descripcion: e.target.value})}, value:my.state.descripcion,label: 'Protocol Description'}),
-        h(Form.Checkbox, {label:'protocol mission option'}),
-        //A: mensaje subida exitosa de mision
-        h(Message , {success: true, header:"formulario completado",content: "todo ok subido al server" },),
-        //Select images: <input type="file" name="img" multiple></input>
-        h('input',{type:'file',id:'files',multiple:true},"Add files"),
-        h(Form.Button,{color:'blue',disabled: !my.state.nombre || !my.state.missionId,onClick: () => crearMision(my)},'Subir Mision')   
-      ),
-      h(Segment,{basic:true},
-			  h(Button,{onClick: ()=> preactRouter.route("/")},"Volver"))
+      )  
 		);
-	}
+  }
 });
 
-//U:Componente que permite cambiar el theme de la pagina
-uiCfg= MkUiComponent(function uiCfg(my) {
-  var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
-              .split(' '); 
-	my.render= function () {
+//selects para elegir manifiesto y guia de embarque
+uiSelects = MkUiComponent(function uiSelects(my,props) {
+  listaGuias= [ {"nombre": "1746"},{"nombre": "2222"},{"nombre": "3333"}];
+  const options = props.manifiesto.map( guia => 
+      { return {
+        key: guia.nombre,
+        text:  guia.nombre,
+        value:  guia.nombre
+      }
+    }
+  )
+  //se ejecuta cuando se seleccion un item del select
+  function seleccion(e,{value}){
+    my.setState({...my.state,value: value});
+    props.cambiarGuiaSeleccionada(value);
+  }
+  my.render= function (props, state) {
     return (
-			h('div', {id:'app'},
-				h(Button,{onClick: () => onCfg(my), style: {float: 'right'}, basic: true, color: 'gray'},'Cfg'),
-				h('div',{style: {display: my.state.wantsCfg ? 'block' : 'none'}},
-          //A: esta div se muestra solo si el my.state.wantsCfg es true
-          h('div',{},
-             Estilos.map(k => 
-                h(Button,{basic: true, onClick: () => setTheme(k)},k))
+      h('div',{},
+        h(Segment,{raised:true},
+          h(Form,{},
+            h(Form.Group,{}, 
+              h(Form.Field, {inline: true},
+                h(Label,{},'Guia de embarque'),
+                h(Select,{ options:options, placeholder:'Guia', onChange : (e,{value}) => seleccion(e,{value}) }),
+              )
+            )
           )
         ),
       )
-    )
-	}
-});
-
-//AGREGAR A INDEX.HTML
-{/* <style>
-			body{
-				background-image: url('fondo.jpg');
-				background-size: cover;
-			}
-    </style> */}
-    
-//COMPONENTE DE LOGIN
-// uiLogin = MkUiComponent (function uiLogin(my){
-//   my.render = function(){
-//     return (
-//       h(Grid,{textAlign:'center', style:{ height: '100vh' }, verticalAlign:'middle'},
-//         h(Grid.Column, {style: {maxWidth: 450}}, 
-//           h(Header, {as:'h2', color:'teal', textAlign:'center',style: {'font-size':'25px'}},
-//             //<Image src='/logo.png' /> Log-in to your account
-//             h(Image,{src:'blk.png',style: {'height':'60px!important'}},),
-//             "Log-in to your account",
-//           ),
-//           h(Form,{size:'large'},
-//             h(Segment,{stacked:true},
-//               h(Form.Input,{fluid:true, icon:'user', iconPosition:'left', placeholder:'E-mail address'}),
-//               h(Form.Input,{ fluid:true, icon:'lock',iconPosition:'left',placeholder:'Password',type:'password'}),
-//               h(Button,{color:'blue', fluid:true,size:'large',onClick: () => preactRouter.route("/missions")},"Login")
-//             )
-//           )  
-//         )
-//       )
-//     )
-//   }
-// });
-//U: las rutas que contiene mi web app
-Rutas= {
-  "/":{cmp: uiProtocols},
-  "/missions": {cmp: uiMissions},
-  "/missions/:protocolId/:missionId": {cmp: uiFiles},  //uiMissionFiles
-  "/protocol/:protocolId/": {cmp: uiFiles},  //uiMissionFiles
-  "/protocol/createProtocol": {cmp: uiCreateProtocol}
-}
-
-app_style= { //U: CSS especifico para la aplicacion
-	// 'background-color': '#cccccc',
-  'height': '100%', /* You must set a specified height */
-  'background-image': 'url("src/ui/rainbow-blend.jpg")!important',
-  'color':"red ",
-};
-
-uiMenu= MkUiComponent(function uiMenu(my) {
-  handleItemClick = (e, { name }) => my.setState({ activeItem: name }) 
-  my.state= {
-    activeItem: 'review'
+		)
   }
-  const items = [
-    { key: 'protocolos',  name: 'protocolos',onClick: ()=> {handleItemClick; preactRouter.route("/")}},
-    { key: 'misiones', name: 'misiones',onClick: ()=> {handleItemClick; preactRouter.route("/missions") }},
-    { key: 'nuevoProtocolo',  name: 'Nueva protocolo', onClick: ()=> {handleItemClick; preactRouter.route("/protocol/createProtocol")} },  
-  ]
-    
-	my.render= function () {
-    return (
-			//h(Container, {id:'app'},
-				h(Menu,{items: items},)
-      //)
-    )
-	}
 });
 
+//muesta el/los estados de una guia de embarque
+uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
+
+  my.render= function (props, state) {
+    if (props.GuiaDeEmbarque ){
+      my.state = {
+        ...my.state,
+        GuiaDeEmbarque: props.GuiaDeEmbarque
+      }
+    }
+  return (
+    h('div', {id:'app'},
+    my.state.GuiaDeEmbarque ? 
+      my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
+            h(Segment,{clearing:true},
+              h('p',{style:{fontSize: '15px',}},
+                h('b',{},'Contrato: '),
+                my.state.GuiaDeEmbarque.Contrato , 
+                h('b',{},' Evento: '),
+                k.nombre,
+                h('b',{},' lugar:'),
+                k.lugar
+              ),
+              h('p',{style:{fontSize: '13px',}},
+                h('b',{},'fecha Inicio: '),
+                k.fechaInicio ? k.fechaInicio : '-', 
+                h('b',{},' fecha Finalizacion: '),
+                k.fechaFinalizacion ? k.fechaFinalizacion : '-',
+              ),
+              h(Button,{floated:'right',onClick: () => my.props.cambiarGuiaSelec(my.state.GuiaDeEmbarque,k.nombre)},'Ver Items')
+            )
+          )
+        :
+        h('h1',{},'eliga una guia')
+      )
+    )
+  }
+});
+
+
+uiTabla= MkUiComponent(function uiTabla(my) { 
+  //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
+
+  my.componentWillMount = function () {
+    console.table(my.props.guia.Items);
+    console.log(my.props.evento)
+  }
+
+  my.render= function (props, state) {
+    return (
+      h(Table,{celled: true, striped: true},
+        h(Table.Header,{},
+          h(Table.Row,{},
+            h(Table.HeaderCell,{colSpan:'4'},
+            h(Icon,{name: 'file outline'}),
+            `Evento: ${my.props.evento}`,  
+            )
+          )
+        ),
+        h(Table.Body,{},
+          my.props.guia.Items.map( k => 
+            h(Table.Row,{},
+              h(Table.Cell,{collapsing: true},
+                k.itemName
+              ),
+              k.revisiones.map( revision =>              
+                revision.nombre == my.props.evento ?
+                  Object.entries(revision).map( ([k,v]) => 
+                    
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${k}: ${v}`) //A: el componente para esta ruta
+                  ) : 
+                  console.log("hola") 
+              )
+            )
+          )  
+        )
+      )
+		)
+  }
+});
+
+//grid para dividir la pantalla en dos 
+uiGridField = MkUiComponent(function uiClientPortal(my,props) {
+  my.componentWillReceiveProps = function() {
+    console.log("holisss")
+  }
+  my.state = {
+    ...my.state,
+    color: props.color,
+  }
+
+  function cambiarGuiaSelec(guia, evento){
+    my.setState({
+      ...my.state,
+      evento: evento,
+      guia: guia,
+    })
+  }
+  my.render= function (props, state) {
+    return (
+      h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
+        h(Grid.Row,{},
+          h(Grid.Column,{},
+            h(uiGuiasDeEmbarque,{GuiaDeEmbarque: props.GuiaDeEmbarque, cambiarGuiaSelec: cambiarGuiaSelec})            
+          ),
+          h(Grid.Column,{},
+            my.state.evento ?  
+              h(uiTabla,{guia: my.state.guia, evento: my.state.evento})
+              : 
+              h(Header,{},'Seleccione una guia')
+          )
+        )
+      )
+		)
+  }
+});
+
+//llama a los demas componente que muestran el portal de guias
+uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
+  async function obtenerManifiesto (){//U: obtengo los nombre de los dataset disponibles     
+    var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
+    var json = await res.json();
+    my.setState({manifiesto: json}); 
+  }
+  
+  my.componentDidMount = async function () {
+    await obtenerManifiesto();
+  }
+
+  function buscarGuia( guiaId){
+    listaGuias = my.state.manifiesto.GuiasDeEmbarque;
+    //tengo un array de json que tioene la informacion de las guias
+    for (let index = 0; index < listaGuias.length; index++) {
+        if( listaGuias[index].nombre == guiaId){
+          return listaGuias[index]
+        }
+    }
+  }
+
+  function cambiarGuiaSeleccionada (guiaId){
+    var guiaSeleccionada = buscarGuia(guiaId);
+    my.setState({guiaSeleccionada: guiaSeleccionada})
+  }
+
+  my.render= function (props, state) {
+    return (
+      h(Container, {},
+        h(uiMenu,{}),
+          my.state.manifiesto ? 
+            h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada},)
+            :
+            h('p',{},'')
+          ,
+          my.state.guiaSeleccionada?
+          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada})
+          :
+          h()
+			)
+		);
+  }
+});
+
+
+
+//-----------------------------------------------------------------------------
+
+//RUTA DE PREACT ROUTE
+Rutas= {
+  "/":{cmp: uiLogin},
+  "/menu": {cmp: uiClientPortal}
+}
+//-----------------------------------------------------------------------------
 App= MkUiComponent(function App(my) {
+ 
   my.render= function (props, state) {
     return (
       h(Container, {id:'app'},
-        //h(uiLogin)
-        h(uiMenu,{},),
-        h(uiCfg,{},),
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
 						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
@@ -392,10 +295,9 @@ App= MkUiComponent(function App(my) {
 		);
   }
 });
+//-----------------------------------------------------------------------------
 
 
-setTheme('chubby');  //cyborg
+setTheme('chubby');
 render(h(App), document.body);
-//A: estemos en cordova o web, llama a la inicializacion
-
-
+//A: estemos en cordova o web, llama a la iniciali zacion
