@@ -15,6 +15,7 @@ uiIframe = MkUiComponent (function uiIframe(my){
   iframeCFG={
     src:url,
     allowFullScreen: true,
+    autoplay: false,
     style: {
       padding: '10',
       height: '300px',
@@ -109,7 +110,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
   //se ejecuta cuando se seleccion un item del select
   function seleccion(e,{value}){
     my.setState({...my.state,value: value});
-    props.cambiarGuiaSeleccionada(value);
+    props.cambiarGuiaSeleccionada(value,true);
   }
   my.render= function (props, state) {
     return (
@@ -157,7 +158,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                 h('b',{},' fecha Finalizacion: '),
                 k.fechaFinalizacion ? k.fechaFinalizacion : '-',
               ),
-              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre)},'Ver Items')
+              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},'Ver Items')
             )
           )
         :
@@ -261,7 +262,11 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }
   }
   //funciona cambia la guia
-  function cambiarGuiaSeleccionada (guiaId){
+  function cambiarGuiaSeleccionada (guiaId,limpiar){
+    if(limpiar){
+      my.setState({archivo: null}),
+      my.setState({evento: null})     
+    }
     var guiaSeleccionada = buscarGuia(guiaId);
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
@@ -271,8 +276,11 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
       archivo: nombreArchivo
     })
   }
-  function seleccionarEvento(evento){
+  function seleccionarEvento(evento, limpiar){
     console.log(evento)
+    if(limpiar){
+      my.setState({archivo: null})     
+    }
     my.setState({evento: evento})
   }
   my.render= function (props, state) {
