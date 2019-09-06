@@ -14,7 +14,7 @@ function setTheme(t) {
 uiIframe = MkUiComponent (function uiIframe(my){
   var revisiones = my.props.revisiones;
   var evento = my.props.evento;
-  var url = my.props.url;
+  var url;
   var archivos;
   
   for (let index = 0; index < revisiones.length; index++) {
@@ -22,29 +22,34 @@ uiIframe = MkUiComponent (function uiIframe(my){
       archivos = revisiones[index].archivos;
     }
   }
+  // iframeCFG={
+  //   src:url,
+  //   allowFullScreen: true,
+  //   autoplay: false,
+  //   style: {
+  //     padding: '10',
+  //     height: '300px',
+  //     width: '100%',
+  //     border: 'none',
+  //     overflow: 'hidden'
+  //   },
+  // }
 
-  iframeCFG={
-    src:url,
-    allowFullScreen: true,
-    autoplay: false,
-    style: {
-      padding: '10',
-      height: '300px',
-      width: '100%',
-      border: 'none',
-      overflow: 'hidden'
-    },
+  function createLink(fileName){
+    //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
+    my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
   }
-
 
   my.render = function(){
     return (
-      h('div',{style:{'margin-top': '3%'}},
+      h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
         h('h1',{},'Archivos disponibles'),
-        archivos.map( fileName => h(Button,{onClick: () =>console.log("hola")}, fileName) ),
+        archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) ),
+        my.state.url ?
         h('div',{style:{'margin-top': '3%'}},
-          h('iframe',iframeCFG,)  
-        )
+          h('iframe',{src: my.state.url,allowFullScreen: true,autoplay: false,style: {padding: '10','min-height': '50em', width: '100%',border: 'none',overflow: 'hidden'}},)  
+        ):
+        null
       )  
     )
   }
@@ -321,7 +326,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           :
           null,
           my.state.revisiones ?
-            h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones, url: `http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg`})
+            h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones})
           :
             null
       )
