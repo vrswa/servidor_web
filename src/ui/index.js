@@ -10,8 +10,19 @@ function setTheme(t) {
 
 //COMPONENTE DE LOGIN
 
+//recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
+  var revisiones = my.props.revisiones;
+  var evento = my.props.evento;
   var url = my.props.url;
+  var archivos;
+  
+  for (let index = 0; index < revisiones.length; index++) {
+    if(revisiones[index].nombre == evento){
+      archivos = revisiones[index].archivos;
+    }
+  }
+
   iframeCFG={
     src:url,
     allowFullScreen: true,
@@ -24,9 +35,17 @@ uiIframe = MkUiComponent (function uiIframe(my){
       overflow: 'hidden'
     },
   }
+
+
   my.render = function(){
-    return (  
-      h('iframe',iframeCFG,)
+    return (
+      h('div',{style:{'margin-top': '3%'}},
+        h('h1',{},'Archivos disponibles'),
+        archivos.map( fileName => h(Button,{onClick: () =>console.log("hola")}, fileName) ),
+        h('div',{style:{'margin-top': '3%'}},
+          h('iframe',iframeCFG,)  
+        )
+      )  
     )
   }
 });
@@ -171,7 +190,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
 //parte derecha muestra los items 
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
-  console.table(my.props)
+  
   my.render= function (props, state) {
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
@@ -186,7 +205,9 @@ uiTabla= MkUiComponent(function uiTabla(my) {
           ),
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
-              h(Table.Row,{onClick: ()=> my.props.cambiarArchivo("video.mp4"),style:{cursor: 'pointer'}},
+              //my.props.selecRevisiones
+              //h(Table.Row,{onClick: ()=> my.props.cambiarArchivo("video.mp4"),style:{cursor: 'pointer'}},
+              h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
                 h(Table.Cell,{collapsing: true},
                   k.itemName
                 ),
@@ -212,7 +233,6 @@ uiTabla= MkUiComponent(function uiTabla(my) {
 //grid para dividir la pantalla en dos 
 uiGridField = MkUiComponent(function uiClientPortal(my,props) {
   //GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento
-  console.table(my.props)
   my.render= function (props, state) {  
     return (
       h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
@@ -222,7 +242,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
           ),
           h(Grid.Column,{},
             my.props.evento ?  
-              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
+              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo, selecRevisiones: my.props.selecRevisiones})
               : 
               h(Header,{},'Seleccione una guia')
           )
@@ -264,7 +284,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   //funciona cambia la guia
   function cambiarGuiaSeleccionada (guiaId,limpiar){
     if(limpiar){
-      my.setState({archivo: null}),
+      my.setState({archivo: null, revisiones: null}),
       my.setState({evento: null})     
     }
     var guiaSeleccionada = buscarGuia(guiaId);
@@ -279,9 +299,13 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   function seleccionarEvento(evento, limpiar){
     console.log(evento)
     if(limpiar){
-      my.setState({archivo: null})     
+      my.setState({archivo: null, revisiones: null})     
     }
     my.setState({evento: evento})
+  }
+
+  function selecRevisiones(revisiones){
+    my.setState({revisiones: revisiones})
   }
   my.render= function (props, state) {
     return (
@@ -293,11 +317,11 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
             h('p',{},'')
           ,
           my.state.guiaSeleccionada?
-          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
+          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
           :
           null,
-          my.state.archivo ?
-            h(uiIframe,{autoplay: false,url: `http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/${my.state.archivo}`})
+          my.state.revisiones ?
+            h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones, url: `http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg`})
           :
             null
       )
