@@ -9,6 +9,28 @@ function setTheme(t) {
 }
 
 //COMPONENTE DE LOGIN
+
+uiIframe = MkUiComponent (function uiIframe(my){
+  var url = my.props.url;
+  iframeCFG={
+    src:url,
+    allowFullScreen: true,
+    style: {
+      padding: '10',
+      height: '300px',
+      width: '100%',
+      border: 'none',
+      overflow: 'hidden'
+    },
+  }
+  my.render = function(){
+    return (  
+      h('iframe',iframeCFG,)
+    )
+  }
+});
+
+//formulario de ingresa 
 uiLogin = MkUiComponent (function uiLogin(my){
   my.componentWillMount = function () {
     var body = document.getElementsByTagName('body')[0];
@@ -21,7 +43,7 @@ uiLogin = MkUiComponent (function uiLogin(my){
         h(Grid.Column, {style: {maxWidth: 450}}, 
           h(Header, {as:'h2', color:'teal', textAlign:'center',style: {'font-size':'25px'}},
             //<Image src='/logo.png' /> Log-in to your account
-            h(Image,{src:'logoGrande.jpg',style: {'height':'60px!important'}},),
+            h(Image,{src:'blk.png',style: {'height':'60px!important'}},),
             "Log-in to your account",
           ),
           h(Form,{size:'large'},
@@ -76,7 +98,6 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 
 //selects para elegir manifiesto y guia de embarque
 uiSelects = MkUiComponent(function uiSelects(my,props) {
-  listaGuias= [ {"nombre": "1746"},{"nombre": "2222"},{"nombre": "3333"}];
   const options = props.manifiesto.map( guia => 
       { return {
         key: guia.nombre,
@@ -108,14 +129,13 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
   }
 });
 
-//muesta el/los estados de una guia de embarque
+//parte izquierda del grid muestra el estado de la guia
 uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
-
   my.render= function (props, state) {
     if (props.GuiaDeEmbarque ){
       my.state = {
         ...my.state,
-        GuiaDeEmbarque: props.GuiaDeEmbarque
+        GuiaDeEmbarque: my.props.GuiaDeEmbarque
       }
     }
   return (
@@ -137,7 +157,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                 h('b',{},' fecha Finalizacion: '),
                 k.fechaFinalizacion ? k.fechaFinalizacion : '-',
               ),
-              h(Button,{floated:'right',onClick: () => my.props.cambiarGuiaSelec(my.state.GuiaDeEmbarque,k.nombre)},'Ver Items')
+              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre)},'Ver Items')
             )
           )
         :
@@ -147,42 +167,41 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 });
 
-
+//parte derecha muestra los items 
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
-
-  my.componentWillMount = function () {
-    console.table(my.props.guia.Items);
-    console.log(my.props.evento)
-  }
-
+  console.table(my.props)
   my.render= function (props, state) {
     return (
-      h(Table,{celled: true, striped: true},
-        h(Table.Header,{},
-          h(Table.Row,{},
-            h(Table.HeaderCell,{colSpan:'4'},
-            h(Icon,{name: 'file outline'}),
-            `Evento: ${my.props.evento}`,  
-            )
-          )
-        ),
-        h(Table.Body,{},
-          my.props.guia.Items.map( k => 
+      h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
+        h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
+          h(Table.Header,{},
             h(Table.Row,{},
-              h(Table.Cell,{collapsing: true},
-                k.itemName
-              ),
-              k.revisiones.map( revision =>              
-                revision.nombre == my.props.evento ?
-                  Object.entries(revision).map( ([k,v]) => 
-                    
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${k}: ${v}`) //A: el componente para esta ruta
-                  ) : 
-                  console.log("hola") 
+              h(Table.HeaderCell,{colSpan:'4'},
+              h(Icon,{name: 'file outline'}),
+              `Evento: ${my.props.evento}`,  
               )
             )
-          )  
+          ),
+          h(Table.Body,{},
+            my.props.guia.Items.map( k => 
+              h(Table.Row,{onClick: ()=> my.props.cambiarArchivo("video.mp4"),style:{cursor: 'pointer'}},
+                h(Table.Cell,{collapsing: true},
+                  k.itemName
+                ),
+                k.revisiones.map( revision =>              
+                  revision.nombre == my.props.evento ?
+                    Object.entries(revision).map( ([k,v]) =>
+                      v != my.props.evento && k != "archivos" ? 
+                        h(Table.Cell,{collapsing: true,textAlign:'right'}, `${k}: ${v}`) //A: el componente para esta ruta
+                      :
+                      null
+                    ) : 
+                  null  
+                )
+              )
+            )  
+          )
         )
       )
 		)
@@ -191,31 +210,18 @@ uiTabla= MkUiComponent(function uiTabla(my) {
 
 //grid para dividir la pantalla en dos 
 uiGridField = MkUiComponent(function uiClientPortal(my,props) {
-  my.componentWillReceiveProps = function() {
-    console.log("holisss")
-  }
-  my.state = {
-    ...my.state,
-    color: props.color,
-  }
-
-  function cambiarGuiaSelec(guia, evento){
-    my.setState({
-      ...my.state,
-      evento: evento,
-      guia: guia,
-    })
-  }
-  my.render= function (props, state) {
+  //GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento
+  console.table(my.props)
+  my.render= function (props, state) {  
     return (
       h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
         h(Grid.Row,{},
           h(Grid.Column,{},
-            h(uiGuiasDeEmbarque,{GuiaDeEmbarque: props.GuiaDeEmbarque, cambiarGuiaSelec: cambiarGuiaSelec})            
+            h(uiGuiasDeEmbarque,{GuiaDeEmbarque: props.GuiaDeEmbarque, seleccionarEvento: my.props.seleccionarEvento})            
           ),
           h(Grid.Column,{},
-            my.state.evento ?  
-              h(uiTabla,{guia: my.state.guia, evento: my.state.evento})
+            my.props.evento ?  
+              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
               : 
               h(Header,{},'Seleccione una guia')
           )
@@ -227,31 +233,48 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 
 //llama a los demas componente que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
-  async function obtenerManifiesto (){//U: obtengo los nombre de los dataset disponibles     
+
+  //U: funcion que obtiene los nombre de los dataset disponibles
+  async function obtenerManifiesto (){     
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
     var json = await res.json();
     my.setState({manifiesto: json}); 
   }
   
+  //cambio el fondo
+  my.componentWillMount = function () {
+    var body = document.getElementsByTagName('body')[0];
+    body.style.backgroundImage = 'url(fondo.jpg)';
+  }
+  //caundo se monta el componente cargo la informacion
   my.componentDidMount = async function () {
     await obtenerManifiesto();
   }
-
+  //buscar una guia dentro de un manifiesto
   function buscarGuia( guiaId){
     listaGuias = my.state.manifiesto.GuiasDeEmbarque;
-    //tengo un array de json que tioene la informacion de las guias
+    //tengo un array de json que tiene la informacion de las guias
     for (let index = 0; index < listaGuias.length; index++) {
         if( listaGuias[index].nombre == guiaId){
           return listaGuias[index]
         }
     }
   }
-
+  //funciona cambia la guia
   function cambiarGuiaSeleccionada (guiaId){
     var guiaSeleccionada = buscarGuia(guiaId);
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
-
+  function cambiarArchivo (nombreArchivo){
+    my.setState({
+      ...my.state,
+      archivo: nombreArchivo
+    })
+  }
+  function seleccionarEvento(evento){
+    console.log(evento)
+    my.setState({evento: evento})
+  }
   my.render= function (props, state) {
     return (
       h(Container, {},
@@ -262,10 +285,14 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
             h('p',{},'')
           ,
           my.state.guiaSeleccionada?
-          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada})
+          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
           :
-          h()
-			)
+          null,
+          my.state.archivo ?
+            h(uiIframe,{autoplay: false,url: `http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/${my.state.archivo}`})
+          :
+            null
+      )
 		);
   }
 });
