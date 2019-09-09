@@ -183,17 +183,28 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
 //parte derecha muestra los items 
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
-  
+  var columnas = 5;
+  if(my.props.evento == "previa") columnas = 7;
+
   my.render= function (props, state) {
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
           h(Table.Header,{},
             h(Table.Row,{},
-              h(Table.HeaderCell,{colSpan:'4'},
+              h(Table.HeaderCell,{colSpan: columnas},
               h(Icon,{name: 'file outline'}),
               `Evento: ${my.props.evento}`,  
               )
+            ),
+            h(Table.Row,{},
+              h(Table.HeaderCell,{},`Item Name`),
+              h(Table.HeaderCell,{},`Quantity`),
+              h(Table.HeaderCell,{},`Inspected`),
+              h(Table.HeaderCell,{},`Damaged`),
+              h(Table.HeaderCell,{},`Missing`),
+              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Hall`):null,
+              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null
             )
           ),
           h(Table.Body,{},
@@ -208,7 +219,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                   revision.nombre == my.props.evento ?
                     Object.entries(revision).map( ([k,v]) =>
                       v != my.props.evento && k != "archivos" ? 
-                        h(Table.Cell,{collapsing: true,textAlign:'right'}, `${k}: ${v}`) //A: el componente para esta ruta
+                        h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
                       :
                       null
                     ) : 
