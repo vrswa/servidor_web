@@ -1,7 +1,7 @@
 SERVERIP = 'http://192.168.1.196:8888';
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
-var app_style= {};
+var usuarioFormularioIngreso = '';
 
 function setTheme(t) {
   var st= document.getElementById("tema");
@@ -22,18 +22,6 @@ uiIframe = MkUiComponent (function uiIframe(my){
       archivos = revisiones[index].archivos;
     }
   }
-  // iframeCFG={
-  //   src:url,
-  //   allowFullScreen: true,
-  //   autoplay: false,
-  //   style: {
-  //     padding: '10',
-  //     height: '300px',
-  //     width: '100%',
-  //     border: 'none',
-  //     overflow: 'hidden'
-  //   },
-  // }
 
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
@@ -55,27 +43,32 @@ uiIframe = MkUiComponent (function uiIframe(my){
   }
 });
 
-//formulario de ingresa 
+//formulario de ingreso 
 uiLogin = MkUiComponent (function uiLogin(my){
   my.componentWillMount = function () {
     var body = document.getElementsByTagName('body')[0];
-    body.style.backgroundImage = 'url(fondo.jpg)';
+    body.style.backgroundColor = 'rgb(49, 84, 165)';
+  }
+
+  tecleando = (e, { name, value }) => my.setState({[name]: value});
+  enviarFormulario = () => {
+    usuarioFormularioIngreso = my.state.nombre;
+    if(usuarioFormularioIngreso !='' && usuarioFormularioIngreso != null & usuarioFormularioIngreso != undefined){
+      if(my.state.password !='' && my.state.password != null & my.state.password != undefined)
+      preactRouter.route("/menu")
+    }
   }
 
   my.render = function(){
     return (
       h(Grid,{textAlign:'center', style:{ height: '100vh' }, verticalAlign:'middle'},
-        h(Grid.Column, {style: {maxWidth: 450}}, 
-          h(Header, {as:'h2', color:'teal', textAlign:'center',style: {'font-size':'25px'}},
-            //<Image src='/logo.png' /> Log-in to your account
-            h(Image,{src:'blk.png',style: {'height':'60px!important'}},),
-            "Log-in to your account",
-          ),
-          h(Form,{size:'large'},
+        h(Grid.Column, {style: {maxWidth: 450}},
+          h(Image,{src:'blk.png'},), 
+          h(Form,{size:'large',onSubmit: enviarFormulario },
             h(Segment,{stacked:true},
-              h(Form.Input,{fluid:true, icon:'user', iconPosition:'left', placeholder:'E-mail address'}),
-              h(Form.Input,{ fluid:true, icon:'lock',iconPosition:'left',placeholder:'Password',type:'password'}),
-              h(Button,{color:'blue', fluid:true,size:'large',onClick: () =>preactRouter.route("/menu")},"Login")
+              h(Form.Input,{name: 'nombre',onChange: tecleando , fluid:true, icon:'user', iconPosition:'left', placeholder:'E-mail address',value: my.state.nombre}),
+              h(Form.Input,{name: 'password', onChange: tecleando,fluid:true, icon:'lock',iconPosition:'left',placeholder:'Password',type:'password',value: my.state.password}),
+              h(Button,{color:'blue', fluid:true,size:'large'},"Login")  //onClick: () =>preactRouter.route("/menu")
             )
           )  
         )
@@ -94,35 +87,27 @@ uiMenu= MkUiComponent(function uiMenu(my) {
   my.render= function (props, state) {
     return (
       h(Menu,{item:true,stackable:true},
-        h(Menu.Item,{name: 'itemA',onClick: () => handleItemClick },"Consulta"),
-        h(Menu.Item,{name: 'itemB',onClick: () => handleItemClick},"Reportes"),
-        h(Dropdown, {name: 'itemC',onClick: () => handleItemClick,item:true, text:'Nuestro Menu'},
-          h(Dropdown.Menu,{},
-            h(Dropdown.Item,{},'item A'),
-            h(Dropdown.Item,{},'item B'),
-            h(Dropdown.Item,{},'item C')  
-          )
-        ),
         h(Menu.Menu,{position:'right'},
           h(Menu.Item,{},
-            h(Label, {as:'a',color:'yellow' ,image: true},
-              h('img',{'src':'https://react.semantic-ui.com/images/avatar/small/christian.jpg'}),
-              'Bienvenido Tomas',
-              h(Label.Detail,{},'Inspector Aduanero')
+            h(Label, {as:'a',color:'yellow' ,image: true, style:{'font-size': '13px'}},
+              `Bienvenido ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,
+              
             )
           ),
           h(Menu.Item,{},
              h(Button, {negative:true,onClick: () =>preactRouter.route("/")},"salir" ),
-            //h(Button, {negative:true,onClick: () => {console.log("hola")}},"salir" ),
           )
         ),
-      )  
+      )
+
 		);
   }
 });
 
 //selects para elegir manifiesto y guia de embarque
 uiSelects = MkUiComponent(function uiSelects(my,props) {
+  console.log("hola desde selects");
+  console.log(props.manifiesto)
   const options = props.manifiesto.map( guia => 
       { return {
         key: guia.nombre,
@@ -143,8 +128,8 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
           h(Form,{},
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
-                h(Label,{},'Guia de embarque'),
-                h(Select,{ options:options, placeholder:'Guia', onChange : (e,{value}) => seleccion(e,{value}) }),
+                h(Label,{},`Manifiesto: ${props.minifiestoID}`),
+                h(Select,{ options:options, placeholder:'Guia de embarque', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
               )
             )
           )
@@ -166,25 +151,30 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   return (
     h('div', {id:'app'},
     my.state.GuiaDeEmbarque ? 
+      h('div',{},
+      h(Header,{as:'h2', icon:'server', content:`Guia: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white'}},),
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
             h(Segment,{clearing:true},
               h('p',{style:{fontSize: '15px',}},
                 h('b',{},'Contrato: '),
                 my.state.GuiaDeEmbarque.Contrato , 
-                h('b',{},' Evento: '),
+                h('b',{style:{'margin-left': '3%'}},' Evento: '),
                 k.nombre,
-                h('b',{},' lugar:'),
+                h('b',{style:{'margin-left': '3%'}},' lugar:'),
                 k.lugar
               ),
               h('p',{style:{fontSize: '13px',}},
                 h('b',{},'fecha Inicio: '),
                 k.fechaInicio ? k.fechaInicio : '-', 
-                h('b',{},' fecha Finalizacion: '),
-                k.fechaFinalizacion ? k.fechaFinalizacion : '-',
+                h('b',{style:{'margin-left': '3%'}},' hora Inicio: '),
+                k.horaInicio ? k.horaInicio : '-',
+                h('b',{style:{'margin-left': '3%'}},' hora Finalizacion: '),
+                k.horaFinalizacion ? k.horaFinalizacion : '-',
               ),
               h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},'Ver Items')
             )
           )
+        )
         :
         h('h1',{},'eliga una guia')
       )
@@ -259,18 +249,17 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 
 //llama a los demas componente que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
-
+  console.log("usuario: ", usuarioFormularioIngreso)
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){     
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
     var json = await res.json();
     my.setState({manifiesto: json}); 
   }
-  
   //cambio el fondo
   my.componentWillMount = function () {
     var body = document.getElementsByTagName('body')[0];
-    body.style.backgroundImage = 'url(fondo.jpg)';
+    body.style.backgroundColor = 'rgb(49, 84, 165)';
   }
   //caundo se monta el componente cargo la informacion
   my.componentDidMount = async function () {
@@ -312,12 +301,16 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   function selecRevisiones(revisiones){
     my.setState({revisiones: revisiones})
   }
+
+  function usuario(nombreUsuario){
+    my.setState({usuario: nombreUsuario})
+  }
   my.render= function (props, state) {
     return (
       h(Container, {},
         h(uiMenu,{}),
           my.state.manifiesto ? 
-            h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada},)
+            h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
             :
             h('p',{},'')
           ,
