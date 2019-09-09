@@ -106,8 +106,6 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 
 //selects para elegir manifiesto y guia de embarque
 uiSelects = MkUiComponent(function uiSelects(my,props) {
-  console.log("hola desde selects");
-  console.log(props.manifiesto)
   const options = props.manifiesto.map( guia => 
       { return {
         key: guia.nombre,
@@ -249,7 +247,6 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 
 //llama a los demas componente que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
-  console.log("usuario: ", usuarioFormularioIngreso)
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){     
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
@@ -291,7 +288,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     })
   }
   function seleccionarEvento(evento, limpiar){
-    console.log(evento)
     if(limpiar){
       my.setState({archivo: null, revisiones: null})     
     }
