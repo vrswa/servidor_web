@@ -17,6 +17,7 @@ uiIframe = MkUiComponent (function uiIframe(my){
   var url;
   var archivos;
   
+  //se selecciona los archivos de la revision correspondiente
   for (let index = 0; index < revisiones.length; index++) {
     if(revisiones[index].nombre == evento){
       archivos = revisiones[index].archivos;
@@ -32,7 +33,10 @@ uiIframe = MkUiComponent (function uiIframe(my){
     return (
       h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
         h('h1',{},'Archivos disponibles'),
-        archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) ),
+        archivos.length == 0 
+        ? h('p',{style:{'font-size':'20px'}},'Not files for this item')
+        : archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) ),
+        
         my.state.url ?
         h('div',{style:{'margin-top': '3%'}},
           h('iframe',{src: my.state.url,allowFullScreen: true,autoplay: false,style: {padding: '10','min-height': '50em', width: '100%',border: 'none',overflow: 'hidden'}},)  
@@ -90,12 +94,11 @@ uiMenu= MkUiComponent(function uiMenu(my) {
         h(Menu.Menu,{position:'right'},
           h(Menu.Item,{},
             h(Label, {as:'a',color:'yellow' ,image: true, style:{'font-size': '13px'}},
-              `Bienvenido ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,
-              
+              `Welcome ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,
             )
           ),
           h(Menu.Item,{},
-             h(Button, {negative:true,onClick: () =>preactRouter.route("/")},"salir" ),
+             h(Button, {negative:true,onClick: () =>preactRouter.route("/")},"Log Out" ),
           )
         ),
       )
@@ -126,8 +129,8 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
           h(Form,{},
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
-                h(Label,{},`Manifiesto: ${props.minifiestoID}`),
-                h(Select,{ options:options, placeholder:'Guia de embarque', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
+                h(Label,{},`Manifest: ${props.minifiestoID}`),
+                h(Select,{ options:options, placeholder:'Air Waybills', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
               )
             )
           )
@@ -150,31 +153,28 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     h('div', {id:'app'},
     my.state.GuiaDeEmbarque ? 
       h('div',{},
-      h(Header,{as:'h2', icon:'server', content:`Guia: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white'}},),
+      h(Header,{as:'h2', icon:'server', content:`Air Waybill: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white','font-size':'23px'}},),
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
             h(Segment,{clearing:true},
               h('p',{style:{fontSize: '15px',}},
-                h('b',{},'Contrato: '),
-                my.state.GuiaDeEmbarque.Contrato , 
-                h('b',{style:{'margin-left': '3%'}},' Evento: '),
-                k.nombre,
-                h('b',{style:{'margin-left': '3%'}},' lugar:'),
+                h('b',{style:{'font-size':'20px'}},'Event: ',k.nombre),
+                h('b',{style:{'margin-left': '3%'}},' Place:'),
                 k.lugar
               ),
               h('p',{style:{fontSize: '13px',}},
-                h('b',{},'fecha Inicio: '),
+                h('b',{},'Date: '),
                 k.fechaInicio ? k.fechaInicio : '-', 
-                h('b',{style:{'margin-left': '3%'}},' hora Inicio: '),
+                h('b',{style:{'margin-left': '3%'}},' Start time: '),
                 k.horaInicio ? k.horaInicio : '-',
-                h('b',{style:{'margin-left': '3%'}},' hora Finalizacion: '),
+                h('b',{style:{'margin-left': '3%'}},' End time: '),
                 k.horaFinalizacion ? k.horaFinalizacion : '-',
               ),
-              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},'Ver Items')
+              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},'More info')
             )
           )
         )
         :
-        h('h1',{},'eliga una guia')
+        h('h1',{},'Select a Air Waybill')
       )
     )
   }
@@ -209,8 +209,6 @@ uiTabla= MkUiComponent(function uiTabla(my) {
           ),
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
-              //my.props.selecRevisiones
-              //h(Table.Row,{onClick: ()=> my.props.cambiarArchivo("video.mp4"),style:{cursor: 'pointer'}},
               h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
                 h(Table.Cell,{collapsing: true},
                   k.itemName
@@ -248,7 +246,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
             my.props.evento ?  
               h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo, selecRevisiones: my.props.selecRevisiones})
               : 
-              h(Header,{},'Seleccione una guia')
+              h('h3',{},'Select a Air Waybill')
           )
         )
       )
@@ -309,9 +307,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({revisiones: revisiones})
   }
 
-  function usuario(nombreUsuario){
-    my.setState({usuario: nombreUsuario})
-  }
+  
   my.render= function (props, state) {
     return (
       h(Container, {},
@@ -326,6 +322,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           :
           null,
           my.state.revisiones ?
+          //preactRouter.route("/files",{data: "daniel"})
             h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones})
           :
             null
@@ -334,14 +331,23 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   }
 });
 
+// uiFiles = MkUiComponent( function uiFiles(my) {
+//   //if (this.props.missionId)
+//   console.log(this.props.data)
+//   my.render = function(props,state){
+//     return(
 
-
-//-----------------------------------------------------------------------------
+//         h('div', {id:'archivos',},
+//           )   
+        
+//     )}
+// });
 
 //RUTA DE PREACT ROUTE
 Rutas= {
   "/":{cmp: uiLogin},
-  "/menu": {cmp: uiClientPortal}
+  "/menu": {cmp: uiClientPortal},
+  //"/files":{cmp: uiFiles}
 }
 //-----------------------------------------------------------------------------
 App= MkUiComponent(function App(my) {
