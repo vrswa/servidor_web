@@ -1,8 +1,14 @@
-SERVERIP = 'http://192.168.1.196:8888';
+SERVERIP = 'http://192.168.1.203:8888';
+
+rgbColors = {
+  azulOscuro: 'rgb(56,87,162)',
+  azulClaro: 'rgb(105,178,226)',
+}
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
 var usuarioFormularioIngreso = '';
-
+var listaArchivos = '';
+var eventoGlobal;
 function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
@@ -12,9 +18,9 @@ function setTheme(t) {
 
 //recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
+  console.log(my.props.revisiones, my.props.evento)
   var revisiones = my.props.revisiones;
   var evento = my.props.evento;
-  var url;
   var archivos;
   
   //se selecciona los archivos de la revision correspondiente
@@ -32,11 +38,14 @@ uiIframe = MkUiComponent (function uiIframe(my){
   my.render = function(){
     return (
       h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
-        h('h1',{},'Archivos disponibles'),
-        archivos.length == 0 
-        ? h('p',{style:{'font-size':'20px'}},'Not files for this item')
-        : archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) ),
-        
+        //h('h1',{style:{color: 'rgb(255,255,255)'}},'Media available'),
+        archivos == undefined
+        ? h('p',{style:{'font-size':'20px',color: 'rgb(255,255,255)'}},'Go back and Select another Item')
+        :h('div',{},
+          h('h1',{style:{color: 'rgb(255,255,255)'}},'Media available'),
+          archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) )
+        )
+        ,
         my.state.url ?
         h('div',{style:{'margin-top': '3%'}},
           h('iframe',{src: my.state.url,allowFullScreen: true,autoplay: false,style: {padding: '10','min-height': '50em', width: '100%',border: 'none',overflow: 'hidden'}},)  
@@ -90,19 +99,23 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 
   my.render= function (props, state) {
     return (
-      h(Menu,{item:true,stackable:true},
+      h(Menu,{item:true,stackable:true,style:{backgroundColor: 'rgb(255, 255, 255)'}},
+      //width: 180px;height:60px
+        h('img',{src: './imagenes/logoBlanco.png',style:{width:"180px",height:'60px',"margin-top":"3px"}}),
+        h(Menu.Item,{},
+          //h('img',{src: './imagenes/logoBlanco.png',width:'50px!important'})
+        ),
         h(Menu.Menu,{position:'right'},
           h(Menu.Item,{},
-            h(Label, {as:'a',color:'yellow' ,image: true, style:{'font-size': '13px'}},
-              `Welcome ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,
-            )
+            h(Icon,{name:'user',size:'big',style:{'color': rgbColors.azulOscuro}}),
+            h('p',{style:{'color': rgbColors.azulOscuro}}, `Welcome ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,)
+            
           ),
           h(Menu.Item,{},
-             h(Button, {negative:true,onClick: () =>preactRouter.route("/")},"Log Out" ),
+             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': rgbColors.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
           )
         ),
       )
-
 		);
   }
 });
@@ -153,23 +166,38 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     h('div', {id:'app'},
     my.state.GuiaDeEmbarque ? 
       h('div',{},
-      h(Header,{as:'h2', icon:'server', content:`Air Waybill: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white','font-size':'23px'}},),
+      //h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white','font-size':'23px'}},),
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
-            h(Segment,{clearing:true},
+            h(Segment,{clearing:true,style:{'max-height': '152px'}},
               h('p',{style:{fontSize: '15px',}},
                 h('b',{style:{'font-size':'20px'}},'Event: ',k.nombre),
-                h('b',{style:{'margin-left': '3%'}},' Place:'),
-                k.lugar
-              ),
-              h('p',{style:{fontSize: '13px',}},
-                h('b',{},'Date: '),
-                k.fechaInicio ? k.fechaInicio : '-', 
-                h('b',{style:{'margin-left': '3%'}},' Start time: '),
-                k.horaInicio ? k.horaInicio : '-',
-                h('b',{style:{'margin-left': '3%'}},' End time: '),
-                k.horaFinalizacion ? k.horaFinalizacion : '-',
-              ),
-              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},'More info')
+                h('div',{},
+                  h('b',{style:{'margin-top': '5px'}},' Place:'),
+                  k.lugar
+                )
+              ), 
+              h(Grid,{columns: 'two', style: {'margin-top': '3%'}},
+                h(Grid.Row,{},
+                  h(Grid.Column,{},
+                    //primer columna  
+                  h('p',{style:{fontSize: '13px',}},
+
+                    h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},'Date: '),
+                    k.fechaInicio ? k.fechaInicio : '-'), 
+
+                    h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},' Start time: '),
+                    k.horaInicio ? k.horaInicio : '-'),
+
+                    h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},' End time: '),
+                    k.horaFinalizacion ? k.horaFinalizacion : '-'),
+                  ),
+                  ),
+                  h(Grid.Column,{},
+                    //otra columna
+                    h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},h('b',{},'More info'))
+                  )
+                )
+              )
             )
           )
         )
@@ -185,7 +213,6 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 5;
   if(my.props.evento == "previa") columnas = 7;
-
   my.render= function (props, state) {
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
@@ -194,12 +221,12 @@ uiTabla= MkUiComponent(function uiTabla(my) {
             h(Table.Row,{},
               h(Table.HeaderCell,{colSpan: columnas},
               h(Icon,{name: 'file outline'}),
-              `Evento: ${my.props.evento}`,  
+              `Event: ${my.props.evento}`,  
               )
             ),
             h(Table.Row,{},
               h(Table.HeaderCell,{},`Item Name`),
-              h(Table.HeaderCell,{},`Quantity`),
+              h(Table.HeaderCell,{},`Reported`),
               h(Table.HeaderCell,{},`Inspected`),
               h(Table.HeaderCell,{},`Damaged`),
               h(Table.HeaderCell,{},`Missing`),
@@ -209,7 +236,8 @@ uiTabla= MkUiComponent(function uiTabla(my) {
           ),
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
-              h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
+              //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
+              h(Table.Row,{onClick: ()=> { listaArchivos=k.revisiones; preactRouter.route("/files")},style:{cursor: 'pointer'}},
                 h(Table.Cell,{collapsing: true},
                   k.itemName
                 ),
@@ -237,16 +265,18 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
   //GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento
   my.render= function (props, state) {  
     return (
-      h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
+      //h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
+      h(Grid,{ stackable: true,divided: true, style: {'margin-top': '3%'}},
         h(Grid.Row,{},
-          h(Grid.Column,{},
+          h(Grid.Column,{width: '7'},
             h(uiGuiasDeEmbarque,{GuiaDeEmbarque: props.GuiaDeEmbarque, seleccionarEvento: my.props.seleccionarEvento})            
           ),
-          h(Grid.Column,{},
+          h(Grid.Column,{width: '9'},
             my.props.evento ?  
               h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo, selecRevisiones: my.props.selecRevisiones})
               : 
-              h('h3',{},'Select a Air Waybill')
+              null
+              //h(Header,{style:{color: 'rgb(255,255,255)'},textAlign:'center',size: 'huge'},'Select a Event')
           )
         )
       )
@@ -297,6 +327,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     })
   }
   function seleccionarEvento(evento, limpiar){
+    eventoGlobal = evento;
     if(limpiar){
       my.setState({archivo: null, revisiones: null})     
     }
@@ -317,12 +348,15 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
             :
             h('p',{},'')
           ,
-          my.state.guiaSeleccionada?
-          h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
+          my.state.guiaSeleccionada ?
+          h('div',{},
+            h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.nombre}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
+            h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
+          )
           :
           null,
           my.state.revisiones ?
-          //preactRouter.route("/files",{data: "daniel"})
+          //preactRouter.route("/files",{info: "daniel"})
             h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones})
           :
             null
@@ -331,23 +365,45 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   }
 });
 
-// uiFiles = MkUiComponent( function uiFiles(my) {
-//   //if (this.props.missionId)
-//   console.log(this.props.data)
-//   my.render = function(props,state){
-//     return(
+uiFiles = MkUiComponent( function uiFiles(my) {
+ 
+  close = () => my.setState({ open: false });
+  open = () => my.setState({ open: true })
 
-//         h('div', {id:'archivos',},
-//           )   
-        
-//     )}
-// });
+  my.render = function(props,state){
+    
+    console.table(my.state)
+    return(
+        h('div', {id:'archivos',},
+          // listaArchivos.length > 0 
+          // ?
+          // h('div',{},
+          //   h(Button,{onClick: open},'abrir modal'),
+          //   h(Modal,{open: my.state.open},
+          //     h(Modal.Header,{},'Select a Photo'),
+          //     h(Modal.Content,{},
+          //       h('p',{},
+          //         'Your inbox is getting full, would you like us to enable automatic',
+          //         'archiving of old messages'
+          //       )
+          //     ),
+          //     h(Modal.Actions,{},
+          //       h(Button,{onClick: close()},'cerrar modal'),  
+          //     )
+          //   )
+          // )
+          // :h('h1',{style:{color: 'white'}},'No hay archivos')
+          console.log(listaArchivos,eventoGlobal),
+          h(uiIframe,{revisiones: listaArchivos, evento: eventoGlobal},)
+        )   
+    )}
+});
 
 //RUTA DE PREACT ROUTE
 Rutas= {
   "/":{cmp: uiLogin},
   "/menu": {cmp: uiClientPortal},
-  //"/files":{cmp: uiFiles}
+  "/files":{cmp: (props) => h(uiFiles,{...props})}
 }
 //-----------------------------------------------------------------------------
 App= MkUiComponent(function App(my) {
@@ -358,7 +414,7 @@ App= MkUiComponent(function App(my) {
 				h(preactRouter.Router, {history: History.createHashHistory()},
 					Object.entries(Rutas).map( ([k,v]) => 
 						h(v.cmp, {path: k, ...v}) //A: el componente para esta ruta
-					)
+          ),
 				), //A: la parte de la app que controla el router
 				//VER: https://github.com/preactjs/preact-router
 			)
