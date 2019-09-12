@@ -38,7 +38,7 @@ uiIframe = MkUiComponent (function uiIframe(my){
   my.render = function(){
     return (
       h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
-        //h('h1',{style:{color: 'rgb(255,255,255)'}},'Media available'),
+        h(Button,{onClick: () => preactRouter.route("/menu"), floated:'right',style:{"background-color": "rgb(105, 178, 226)",color: "rgb(255, 255, 255)"}},'Return'),
         archivos == undefined
         ? h('p',{style:{'font-size':'20px',color: 'rgb(255,255,255)'}},'Go back and Select another Item')
         :h('div',{},
@@ -169,14 +169,14 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       //h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white','font-size':'23px'}},),
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
             h(Segment,{clearing:true,style:{'max-height': '152px'}},
-              h('p',{style:{fontSize: '15px',}},
+              h('p',{style:{fontSize: '15px'}},
                 h('b',{style:{'font-size':'20px'}},'Event: ',k.nombre),
                 h('div',{},
                   h('b',{style:{'margin-top': '5px'}},' Place:'),
                   k.lugar
                 )
               ), 
-              h(Grid,{columns: 'two', style: {'margin-top': '3%'}},
+              h(Grid,{columns: 'two', style: {}},
                 h(Grid.Row,{},
                   h(Grid.Column,{},
                     //primer columna  
