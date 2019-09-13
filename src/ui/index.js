@@ -1,5 +1,4 @@
-SERVERIP = 'http://192.168.1.203:8888';
-
+SERVERIP = 'http://192.168.1.149:8888';
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
@@ -22,7 +21,7 @@ uiIframe = MkUiComponent (function uiIframe(my){
   var revisiones = my.props.revisiones;
   var evento = my.props.evento;
   var archivos;
-  
+  var minHeight;
   //se selecciona los archivos de la revision correspondiente
   for (let index = 0; index < revisiones.length; index++) {
     if(revisiones[index].nombre == evento){
@@ -33,8 +32,49 @@ uiIframe = MkUiComponent (function uiIframe(my){
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
     my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
+    fileName.search("mp4") != -1 
+      ?minHeight = '25em' //for video
+      :minHeight = '25em' //for mp4
   }
 
+  function buscarIndex (fileName){
+    for (let index = 0; index < archivos.length; index++) {
+      if(archivos[index] == fileName)
+       return index; 
+    }
+    return -1;
+  }
+
+  function lastSlashPos(url){
+    for (let index = url.length-1; index >= 0; index--) {
+      if(url[index] == '/') return index;
+    }
+    return -1;
+  }
+
+  function namePos (url){
+    lastSlash = lastSlashPos(url);
+    fileName = url.substring(lastSlash + 1);
+    return buscarIndex(fileName)
+  }
+
+  function cambiarUrlAdelante (){
+    urlActual = my.state.url;
+    fileNamePos = namePos(urlActual);
+    fileNamePos == archivos.length - 1 
+      ? newPos = 0
+      : newPos = ++fileNamePos;
+    console.log(archivos[newPos])
+    createLink(archivos[newPos])
+  }
+  function cambiarUrlAtras (){
+    urlActual = my.state.url;
+    fileNamePos = namePos(urlActual);
+    fileNamePos == 0 
+      ? newPos = archivos.length - 1
+      : newPos = --fileNamePos;
+    createLink(archivos[newPos])
+  }
   my.render = function(){
     return (
       h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
@@ -47,8 +87,17 @@ uiIframe = MkUiComponent (function uiIframe(my){
         )
         ,
         my.state.url ?
-        h('div',{style:{'margin-top': '3%'}},
-          h('iframe',{src: my.state.url,allowFullScreen: true,autoplay: false,style: {padding: '10','min-height': '50em', width: '100%',border: 'none',overflow: 'hidden'}},)  
+        h(Grid,{style:{'margin-top': '3%'},columns: 'three',centered: true},
+          h(Grid.Row,{centered: true},
+            h(Grid.Column,{width: 'seven'},
+              //'min-width': '35em'
+              h('iframe',{src: my.state.url,autoplay: false,style: {'min-height': minHeight,'min-width': '35em', border: 'none'}},)  
+            ),
+          ),
+          h(Grid.Row,{centered: true},
+            h(Button,{onClick: () => cambiarUrlAtras()},'cambiar url'),
+            h(Button,{onClick: () => cambiarUrlAdelante()},'cambiar url')
+          )
         ):
         null
       )  
