@@ -13,7 +13,69 @@ function setTheme(t) {
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
 
-//COMPONENTE DE LOGIN
+
+uiModales = MkUiComponent (function uiModales(my){
+  //ESTILOS
+  modal = {
+    'position': 'fixed', /* Stay in place */
+    'z-index': '1', /* Sit on top */
+    'padding-top': '100px', /* Location of the box */
+    'left': '0',
+    'top': '0',
+    'width': '100%', /* Full width */
+    'height': '100%', /* Full height */
+    'overflow': 'auto', /* Enable scroll if needed */
+    'background-color': 'rgb(0,0,0)', /* Fallback color */
+    'background-color': 'rgba(0,0,0,0.4)', /* Black w/ opacity */
+  }
+  /* Modal Content */
+modalContent = {
+  'background-color':'#fefefe',
+  'margin':' auto',
+  'padding': '20px',
+  'border': '1px solid #888',
+  'width': '80%',
+  'min-height': '25%'
+}
+  ///////////////////
+  function handleClick () {
+    my.setState({visible: false})
+  }
+  my.state = {
+    visible: true
+  }
+  
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target.id == 'myModal') {
+      my.setState({visible: false})
+    }
+  }
+
+  my.render = function(){
+    
+    return (
+      
+      my.state.visible ? 
+      h('div',{id:"myModal",class: 'modal',style:modal},
+        h('div',{class: "modal-content",style:modalContent},
+          h(Button,{icon: 'x', floated:'right',id: 'exit',onClick: handleClick}, ),
+          h('p',{},'some text in the modal'),
+          
+        )
+      )
+      : null
+    )
+  }
+});
+
+uiModaless = MkUiComponent (function uiModales(my){
+  my.render = function(){
+    return (
+      h('h1',{},'asdasdasdasd')
+    )
+  }
+});
 
 //recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
@@ -262,6 +324,17 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 5;
   if(my.props.evento == "previa") columnas = 7;
+
+  function tableRowClick (k) {
+    listaArchivos=k.revisiones; 
+    for (let index = 0; index < listaArchivos.length; index++) {
+      if (listaArchivos[index].nobre == my.props.evento)
+        console.log(listaArchivos[index])
+        if (listaArchivos[index].archivos.length > 0)
+          preactRouter.route("/files")
+          
+    }
+  }
   my.render= function (props, state) {
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
@@ -286,7 +359,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
               //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
-              h(Table.Row,{onClick: ()=> { listaArchivos=k.revisiones; preactRouter.route("/files")},style:{cursor: 'pointer'}},
+              h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
                 h(Table.Cell,{collapsing: true},
                   k.itemName
                 ),
@@ -387,10 +460,19 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({revisiones: revisiones})
   }
 
+  function mostrarModal(){
+    console.log("adas")
+    return h(uiModaless)
+  }
+
   
   my.render= function (props, state) {
     return (
       h(Container, {},
+        h(Button,{onClick: ()=> my.setState({mostrarModal: true})},'hola como estas'),
+        my.state.mostrarModal 
+          ? h(uiModales,{})
+          : null, 
         h(uiMenu,{}),
           my.state.manifiesto ? 
             h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
