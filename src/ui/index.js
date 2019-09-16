@@ -57,8 +57,14 @@ uiModal = MkUiComponent (function uiModal(my){
       my.state.visible ? 
       h('div',{id:"myModal",class: 'modal',style:modal},
         h('div',{class: "modal-content",style:modalContent},
-          h(Button,{icon: 'x', floated:'right',id: 'exit',onClick: handleClick}, ),
-          h('p',{},'some text in the modal'),
+          h('div',{style:{}},
+            h(Button,{icon: 'x', floated:'right',id: 'exit',onClick: handleClick}, ),
+          ),
+          h(Header,{as: 'h1'},
+            h(Icon,{name: 'film'}),
+            h(Header.Content,{},'Medias for this item')
+          ),
+          
           h(uiGallery,{})
         )
       )
@@ -69,20 +75,37 @@ uiModal = MkUiComponent (function uiModal(my){
 
 uiGallery = MkUiComponent (function uiGallery(my){
   url = `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos`;
-  ArrayPrueba = ['imagenPrueba1.jpg','imagenPrueba2.jpg','imagenPrueba4.jpg']
+  videoImagePlaceHolder = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
   
+
+  function createLink(fileName){
+    //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
+    my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
+    fileName.search("mp4") != -1 
+      ?minHeight = '25em' //for video
+      :minHeight = '25em' //for mp4
+  }
+
   my.render = function(){
+    console.log(listaArchivos)
     return (
       h(Grid,{ stackable: true,divided: true,},
         h(Grid.Row,{},
-          h(Grid.Column,{width: '4', style:{'background-color': 'green'}},
-            ArrayPrueba.map( fileName => (
-              h(Image,{rounded: true,size: 'small',centered: true, bordered: true, src: `${url}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})             
+          h(Grid.Column,{width: '4', style:{}},
+            listaArchivos.map( fileName => (
+              fileName.substring(fileName.length-3) == 'mp4'
+              ?h(Image,{onClick:()=> createLink(fileName),rounded: true,size: 'tiny',centered: true, src: videoImagePlaceHolder,style:{'margin-top': '5%','cursor': 'pointer'}})
+              :h(Image,{onClick:()=> createLink(fileName), rounded: true,size: 'small',centered: true, bordered: true, src: `${url}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})             
               )
             )
           ),
-          h(Grid.Column,{width: '12',style:{'background-color': 'yellow'}},
-            h(Image,{size: 'big',centered: true,src: `${url}/${ArrayPrueba[0]}`})
+          h(Grid.Column,{width: '12',style:{}},
+            my.state.url
+            ? my.state.url.search("mp4") != -1 
+                ?h('iframe',{src: my.state.url,autoplay: false,style: {'min-height': minHeight,'min-width': '70%',border: 'none','display':'block',margin: '0 auto'}},)
+                :h(Image,{centered: true, bordered: true, src: my.state.url})
+            :null
+            //h(Image,{size: 'big',centered: true,src: `${url}/${ArrayPrueba[0]}`})
           )
         )
       )
@@ -338,15 +361,15 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   if(my.props.evento == "previa") columnas = 7;
 
   function tableRowClick (k) {
-    // listaArchivos=k.revisiones; 
-    // for (let index = 0; index < listaArchivos.length; index++) {
-    //   if (listaArchivos[index].nobre == my.props.evento)
-    //     console.log(listaArchivos[index])
-    //     if (listaArchivos[index].archivos.length > 0)
-    //       preactRouter.route("/files")
-          
-    // }
-    my.setState({mostrarModal: true});
+    revision=k.revisiones; 
+    for (let index = 0; index < revision.length; index++) {
+      if (revision[index].nombre == my.props.evento){
+        if (revision[index].archivos.length > 0){
+          listaArchivos = revision[index].archivos;
+          my.setState({mostrarModal: true});
+        }
+      }    
+    }
   }
   my.render= function (props, state) {
     return (
@@ -477,7 +500,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({revisiones: revisiones})
   }
 
-  
   my.render= function (props, state) {
     return (
       h(Container, {},
