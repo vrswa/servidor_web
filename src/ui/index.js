@@ -1,4 +1,4 @@
-SERVERIP = 'http://192.168.1.149:8888';
+SERVERIP = 'http://192.168.1.176:8888';
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
@@ -14,12 +14,12 @@ function setTheme(t) {
 }
 
 
-uiModales = MkUiComponent (function uiModales(my){
+uiModal = MkUiComponent (function uiModal(my){
   //ESTILOS
   modal = {
     'position': 'fixed', /* Stay in place */
     'z-index': '1', /* Sit on top */
-    'padding-top': '100px', /* Location of the box */
+    'padding-top': '50px', /* Location of the box */
     'left': '0',
     'top': '0',
     'width': '100%', /* Full width */
@@ -29,14 +29,14 @@ uiModales = MkUiComponent (function uiModales(my){
     'background-color': 'rgba(0,0,0,0.4)', /* Black w/ opacity */
   }
   /* Modal Content */
-modalContent = {
-  'background-color':'#fefefe',
-  'margin':' auto',
-  'padding': '20px',
-  'border': '1px solid #888',
-  'width': '80%',
-  'min-height': '25%'
-}
+  modalContent = {
+    'background-color':'#fefefe',
+    'margin':' auto',
+    'padding': '20px',
+    'border': '1px solid #888',
+    'width': '90%',
+    'min-height': '25%'
+  }
   ///////////////////
   function handleClick () {
     my.setState({visible: false})
@@ -53,15 +53,13 @@ modalContent = {
   }
 
   my.render = function(){
-    
     return (
-      
       my.state.visible ? 
       h('div',{id:"myModal",class: 'modal',style:modal},
         h('div',{class: "modal-content",style:modalContent},
           h(Button,{icon: 'x', floated:'right',id: 'exit',onClick: handleClick}, ),
           h('p',{},'some text in the modal'),
-          
+          h(uiGallery,{})
         )
       )
       : null
@@ -69,14 +67,28 @@ modalContent = {
   }
 });
 
-uiModaless = MkUiComponent (function uiModales(my){
+uiGallery = MkUiComponent (function uiGallery(my){
+  url = `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos`;
+  ArrayPrueba = ['imagenPrueba1.jpg','imagenPrueba2.jpg','imagenPrueba4.jpg']
+  
   my.render = function(){
     return (
-      h('h1',{},'asdasdasdasd')
+      h(Grid,{ stackable: true,divided: true,},
+        h(Grid.Row,{},
+          h(Grid.Column,{width: '4', style:{'background-color': 'green'}},
+            ArrayPrueba.map( fileName => (
+              h(Image,{rounded: true,size: 'small',centered: true, bordered: true, src: `${url}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})             
+              )
+            )
+          ),
+          h(Grid.Column,{width: '12',style:{'background-color': 'yellow'}},
+            h(Image,{size: 'big',centered: true,src: `${url}/${ArrayPrueba[0]}`})
+          )
+        )
+      )
     )
   }
 });
-
 //recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
   console.log(my.props.revisiones, my.props.evento)
@@ -326,14 +338,15 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   if(my.props.evento == "previa") columnas = 7;
 
   function tableRowClick (k) {
-    listaArchivos=k.revisiones; 
-    for (let index = 0; index < listaArchivos.length; index++) {
-      if (listaArchivos[index].nobre == my.props.evento)
-        console.log(listaArchivos[index])
-        if (listaArchivos[index].archivos.length > 0)
-          preactRouter.route("/files")
+    // listaArchivos=k.revisiones; 
+    // for (let index = 0; index < listaArchivos.length; index++) {
+    //   if (listaArchivos[index].nobre == my.props.evento)
+    //     console.log(listaArchivos[index])
+    //     if (listaArchivos[index].archivos.length > 0)
+    //       preactRouter.route("/files")
           
-    }
+    // }
+    my.setState({mostrarModal: true});
   }
   my.render= function (props, state) {
     return (
@@ -376,8 +389,12 @@ uiTabla= MkUiComponent(function uiTabla(my) {
               )
             )  
           )
-        )
-      )
+        ),
+        //Modal para ver los archivos
+        my.state.mostrarModal
+        ? h(uiModal)
+        : null   
+      )           
 		)
   }
 });
@@ -460,19 +477,10 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({revisiones: revisiones})
   }
 
-  function mostrarModal(){
-    console.log("adas")
-    return h(uiModaless)
-  }
-
   
   my.render= function (props, state) {
     return (
       h(Container, {},
-        h(Button,{onClick: ()=> my.setState({mostrarModal: true})},'hola como estas'),
-        my.state.mostrarModal 
-          ? h(uiModales,{})
-          : null, 
         h(uiMenu,{}),
           my.state.manifiesto ? 
             h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
