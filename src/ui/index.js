@@ -1,23 +1,25 @@
-
 SERVERIP = 'http://localhost:8888';
+
 //colores rgb de la empresa BLK
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
-//inspections names
+
+//INSPECTION NAMES
 INSPECTION1 = "Inspection 1";
 INSPECTION2 = "Inspection 2";
 INSPECTION3 = "Inspection 3";
 
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
-function setTheme(t) {
+
+              function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
               
-//VARIABLES PARA COMUNICACION ENTRE
+//VARIABLES PARA COMUNICACION ENTRE componentes
 var usuarioFormularioIngreso = '';
 var listaArchivos = '';
 var eventoGlobal;
@@ -310,18 +312,49 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
 
 //parte izquierda del grid muestra el estado de la guia
 uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
+  
   my.render= function (props, state) {
     if (props.GuiaDeEmbarque ){
       my.state = {
         ...my.state,
         GuiaDeEmbarque: my.props.GuiaDeEmbarque
       }
+      guia = my.state.GuiaDeEmbarque;
     }
+    console.log(props.GuiaDeEmbarque)
   return (
     h('div', {id:'app'},
     my.state.GuiaDeEmbarque ? 
       h('div',{},
-      //h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.GuiaDeEmbarque.nombre}`, style:{'color':'white','font-size':'23px'}},),
+      /*********************************************************/
+      h(Segment,{clearing:true,style:{'max-height': '152px'}},
+        h('p',{style:{fontSize: '15px'}},
+          h('b',{style:{'font-size':'20px'}},'Event: Pre Inspection'),
+          h('div',{},
+            h('b',{style:{'margin-top': '5px'}},' Origin Airport:'),
+            guia.OriginAirport,
+            h('b',{style:{'margin-top': '5px'}},' Destination Airport:'),
+            guia.DestinationAirport
+          )
+        ), 
+        h(Grid,{columns: 'two', style: {}},
+          h(Grid.Row,{},
+            h(Grid.Column,{},
+              //primer columna  
+            h('p',{style:{fontSize: '13px',}},
+
+              h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},'Items: '),
+              guia.Items.length), 
+            ),
+            ),
+            h(Grid.Column,{},
+              //otra columna
+              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento('Pre Inspection',true)},h('b',{},'More info'))
+            )
+          )
+        )
+      ),
+      /******************************************************* */
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
             h(Segment,{clearing:true,style:{'max-height': '152px'}},
               h('p',{style:{fontSize: '15px'}},
@@ -442,8 +475,8 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 6;
-  if(my.props.evento == "previa") columnas = 8;
-
+  if(my.props.evento == INSPECTION3) columnas = 8;
+  console.log(my.props.evento)
   function tableRowClick (k) {
     revision=k.revisiones; 
     for (let index = 0; index < revision.length; index++) {
@@ -457,19 +490,6 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   }
   my.render= function (props, state) {
 
-    function crearFila(revisiones){
-      var fila = {
-        nombre : revisiones.nombre,
-        reported : revisiones.packages || '-',
-        inspected : revisiones.inspected  || '-',
-        damaged : revisiones.dañada || '-',
-        missing : revisiones.faltante || '-',
-        pasillo: revisiones.pasillo || '-',
-        estante : revisiones.estante || '-',
-        archivos : revisiones.archivos ? (revisiones.archivos.length > 0 ? true : false) : '-'
-      }
-      return fila;
-    }
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
@@ -486,8 +506,8 @@ uiTabla= MkUiComponent(function uiTabla(my) {
               h(Table.HeaderCell,{},`Inspected`),
               h(Table.HeaderCell,{},`Damaged`),
               h(Table.HeaderCell,{},`Missing`),
-              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Hall`):null,
-              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null,
+              my.props.evento == INSPECTION2 ? h(Table.HeaderCell,{},`Hall`):null,
+              my.props.evento == INSPECTION2 ? h(Table.HeaderCell,{},`Shelf`):null,
               h(Table.HeaderCell,{},'Media')
             )
           ),
@@ -499,9 +519,9 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                     h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
                     h(Table.Cell,{collapsing: true},k.itemName),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada ? revision.dañada : '-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante ? revision.faltante : '-'}`),
                     revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
                     revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
 
@@ -514,7 +534,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                           )
                         :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
                       ) 
-                      : '-'
+                      : h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
                     )//parentesis table row
                   )
                   : 
@@ -564,7 +584,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){   
-    var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
+    //var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
     var json = await res.json();
     my.setState({manifiesto: json}); 
