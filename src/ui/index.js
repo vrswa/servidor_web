@@ -1,3 +1,4 @@
+
 SERVERIP = 'http://localhost:8888';
 //colores rgb de la empresa BLK
 rgbColors = {
@@ -226,7 +227,7 @@ uiLogin = MkUiComponent (function uiLogin(my){
     return (
       h(Grid,{textAlign:'center', style:{ height: '100vh' }, verticalAlign:'middle'},
         h(Grid.Column, {style: {maxWidth: 450}},
-          h(Image,{src:'blk.png'},), 
+          h(Image,{src:'./imagenes/blk.png'},), 
           h(Form,{size:'large',onSubmit: enviarFormulario },
             h(Segment,{stacked:true},
               h(Form.Input,{name: 'nombre',onChange: tecleando , fluid:true, icon:'user', iconPosition:'left', placeholder:'E-mail address',value: my.state.nombre}),
@@ -358,11 +359,86 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 });
 
-//parte derecha muestra los items 
+//parte derecha muestra los 
+//TABLA VIEJA 
+// uiTabla= MkUiComponent(function uiTabla(my) { 
+//   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
+//   var columnas = 6;
+//   if(my.props.evento == "previa") columnas = 8;
+
+//   function tableRowClick (k) {
+//     revision=k.revisiones; 
+//     for (let index = 0; index < revision.length; index++) {
+//       if (revision[index].nombre == my.props.evento){
+//         if (revision[index].archivos.length > 0){
+//           listaArchivos = revision[index].archivos;
+//           my.setState({mostrarModal: true});
+//         }
+//       }    
+//     }
+//   }
+//   my.render= function (props, state) {
+//     return (
+//       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
+//         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
+//           h(Table.Header,{},
+//             h(Table.Row,{},
+//               h(Table.HeaderCell,{colSpan: columnas},
+//               h(Icon,{name: 'file outline'}),
+//               `Event: ${my.props.evento}`,  
+//               )
+//             ),
+//             h(Table.Row,{},
+//               h(Table.HeaderCell,{},`Item Name`),
+//               h(Table.HeaderCell,{},`Reported`),
+//               h(Table.HeaderCell,{},`Inspected`),
+//               h(Table.HeaderCell,{},`Damaged`),
+//               h(Table.HeaderCell,{},`Missing`),
+//               my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Hall`):null,
+//               my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null,
+//               h(Table.HeaderCell,{},'Media')
+//             )
+//           ),
+//           h(Table.Body,{},
+//             my.props.guia.Items.map( k => 
+//               //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
+//               h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
+//                 h(Table.Cell,{collapsing: true},
+//                   k.itemName
+//                 ),
+//                 k.revisiones.map( revision =>              
+//                   revision.nombre == my.props.evento ?
+//                     Object.entries(revision).map( ([k,v]) =>
+//                       v != my.props.evento && k != "archivos" ? 
+//                         h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
+//                       :
+//                       null
+//                     ) : 
+//                   null  
+//                 ),
+//                 h(Table.Cell,{collapsing: true,textAlign:'right'},
+//                   h(Icon,{name:'folder'}),
+//                   'hola'
+//                 )
+//               )
+//             )  
+//           )
+//         ),
+//         //Modal para ver los archivos
+//         my.state.mostrarModal
+//         ? h(uiModal)
+//         : null   
+//       )           
+// 		)
+//   }
+// });
+
+
+//TABLA NUEVA
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
-  var columnas = 5;
-  if(my.props.evento == "previa") columnas = 7;
+  var columnas = 6;
+  if(my.props.evento == "previa") columnas = 8;
 
   function tableRowClick (k) {
     revision=k.revisiones; 
@@ -376,6 +452,20 @@ uiTabla= MkUiComponent(function uiTabla(my) {
     }
   }
   my.render= function (props, state) {
+
+    function crearFila(revisiones){
+      var fila = {
+        nombre : revisiones.nombre,
+        reported : revisiones.packages || '-',
+        inspected : revisiones.inspected  || '-',
+        damaged : revisiones.dañada || '-',
+        missing : revisiones.faltante || '-',
+        pasillo: revisiones.pasillo || '-',
+        estante : revisiones.estante || '-',
+        archivos : revisiones.archivos ? (revisiones.archivos.length > 0 ? true : false) : '-'
+      }
+      return fila;
+    }
     return (
       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
@@ -393,27 +483,52 @@ uiTabla= MkUiComponent(function uiTabla(my) {
               h(Table.HeaderCell,{},`Damaged`),
               h(Table.HeaderCell,{},`Missing`),
               my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Hall`):null,
-              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null
+              my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null,
+              h(Table.HeaderCell,{},'Media')
             )
           ),
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
               //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
-              h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
-                h(Table.Cell,{collapsing: true},
-                  k.itemName
-                ),
+             
                 k.revisiones.map( revision =>              
                   revision.nombre == my.props.evento ?
-                    Object.entries(revision).map( ([k,v]) =>
-                      v != my.props.evento && k != "archivos" ? 
-                        h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
-                      :
-                      null
-                    ) : 
+                    // Object.entries(revision).map( ([k,v]) =>
+                    //   v != my.props.evento && k != "archivos" ? 
+                    //     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
+                    //   :
+                    //   null
+                    // ) 
+                  ( 
+                    h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
+                      h(Table.Cell,{collapsing: true},k.itemName),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante}`),
+                      revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
+                      revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
+
+                      //reviso que exista el campo , y si existe que el array sea mayor que cero
+                      revision.archivos ?
+                        (
+                          revision.archivos.length > 0 ?
+                            h(Table.Cell,{collapsing: true,textAlign:'center'},
+                              h(Icon,{color:'green', name:'checkmark', size:'large'})
+                            )
+                          :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
+                        ) 
+                        : '-'
+                    )//parentesis table row
+                  )
+                  : 
                   null  
+                ),
+                h(Table.Cell,{collapsing: true,textAlign:'right'},
+                  h(Icon,{name:'folder'}),
+                  'hola'
                 )
-              )
+             
             )  
           )
         ),
