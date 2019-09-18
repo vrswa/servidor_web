@@ -5,6 +5,10 @@ rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
+//inspections names
+INSPECTION1 = "Inspection 1";
+INSPECTION2 = "Inspection 2";
+INSPECTION3 = "Inspection 3";
 
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
@@ -489,46 +493,37 @@ uiTabla= MkUiComponent(function uiTabla(my) {
           ),
           h(Table.Body,{},
             my.props.guia.Items.map( k => 
-              //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
-             
-                k.revisiones.map( revision =>              
-                  revision.nombre == my.props.evento ?
-                    // Object.entries(revision).map( ([k,v]) =>
-                    //   v != my.props.evento && k != "archivos" ? 
-                    //     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
-                    //   :
-                    //   null
-                    // ) 
+              k.revisiones.map( revision =>              
+                revision.nombre == my.props.evento ?
                   ( 
                     h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
-                      h(Table.Cell,{collapsing: true},k.itemName),
-                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages}`),
-                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected}`),
-                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada}`),
-                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante}`),
-                      revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
-                      revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
+                    h(Table.Cell,{collapsing: true},k.itemName),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante}`),
+                    revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
+                    revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
 
-                      //reviso que exista el campo , y si existe que el array sea mayor que cero
-                      revision.archivos ?
-                        (
-                          revision.archivos.length > 0 ?
-                            h(Table.Cell,{collapsing: true,textAlign:'center'},
-                              h(Icon,{color:'green', name:'checkmark', size:'large'})
-                            )
-                          :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
-                        ) 
-                        : '-'
+                    //reviso que exista el campo , y si existe que el array sea mayor que cero
+                    revision.archivos ?
+                      (
+                        revision.archivos.length > 0 ?
+                          h(Table.Cell,{collapsing: true,textAlign:'center'},
+                            h(Icon,{color:'green', name:'checkmark', size:'large'})
+                          )
+                        :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
+                      ) 
+                      : '-'
                     )//parentesis table row
                   )
                   : 
                   null  
-                ),
-                h(Table.Cell,{collapsing: true,textAlign:'right'},
-                  h(Icon,{name:'folder'}),
-                  'hola'
-                )
-             
+              ),
+              h(Table.Cell,{collapsing: true,textAlign:'right'},
+                h(Icon,{name:'folder'}),
+                'hola'
+              )
             )  
           )
         ),
