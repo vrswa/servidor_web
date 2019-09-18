@@ -1,19 +1,23 @@
-SERVERIP = 'http://192.168.1.176:8888';
+SERVERIP = 'http://localhost:8888';
+//colores rgb de la empresa BLK
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
+
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
-var usuarioFormularioIngreso = '';
-var listaArchivos = '';
-var eventoGlobal;
 function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
+              
+//VARIABLES PARA COMUNICACION ENTRE
+var usuarioFormularioIngreso = '';
+var listaArchivos = '';
+var eventoGlobal;
 
-
+//componente que muestra un modal y llama a uiGaleria
 uiModal = MkUiComponent (function uiModal(my){
   //ESTILOS
   modal = {
@@ -64,7 +68,6 @@ uiModal = MkUiComponent (function uiModal(my){
             h(Icon,{name: 'film'}),
             h(Header.Content,{},'Medias for this item')
           ),
-          
           h(uiGallery,{})
         )
       )
@@ -73,17 +76,18 @@ uiModal = MkUiComponent (function uiModal(my){
   }
 });
 
+//componente que muestra los archivos del array listaArchivos
 uiGallery = MkUiComponent (function uiGallery(my){
   url = `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos`;
   videoImagePlaceHolder = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
-  
+
 
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
     my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
     fileName.search("mp4") != -1 
       ?minHeight = '25em' //for video
-      :minHeight = '25em' //for mp4
+      :minHeight = '25em' //for mp3
   }
 
   my.render = function(){
@@ -449,7 +453,8 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 //llama a los demas componente que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
   //U: funcion que obtiene los nombre de los dataset disponibles
-  async function obtenerManifiesto (){     
+  async function obtenerManifiesto (){   
+    var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
     var json = await res.json();
     my.setState({manifiesto: json}); 
