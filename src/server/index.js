@@ -428,7 +428,9 @@ app.get('/api/blk/dataset/:datasetId',(req,res) => {
 	datasetId = req.params.datasetId;
 	var ruta = rutaCarpeta(CfgBlkDataSetDir,datasetId,null,null,false);
 	if (ruta){
-		res.sendFile(  path.resolve(ruta) )
+		let reqPath = path.join(__dirname, '../../', ruta);
+		console.log(reqPath);
+        res.sendFile(reqPath)
 	}else{
 		res.send('not file in the dataset main folder')
 	}
