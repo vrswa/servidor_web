@@ -1,10 +1,11 @@
 SERVERIP = 'http://localhost:8888';
-
+CfgFileUrl = 'api/blk/protocols/revisarNivelesLiquidos';
 //colores rgb de la empresa BLK
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
+
 
 //INSPECTION NAMES
 INSPECTION1 = "Inspection 1";
@@ -14,7 +15,7 @@ INSPECTION3 = "Inspection 3";
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
 
-              function setTheme(t) {
+function setTheme(t) {
   var st= document.getElementById("tema");
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
@@ -85,13 +86,13 @@ uiModal = MkUiComponent (function uiModal(my){
 
 //componente que muestra los archivos del array listaArchivos
 uiGallery = MkUiComponent (function uiGallery(my){
-  url = `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos`;
+  url = `${SERVERIP}/${CfgFileUrl}`;
   videoImagePlaceHolder = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
 
 
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
-    my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
+    my.setState({url: `${SERVERIP}/${CfgFileUrl}/${fileName}`});
     fileName.search("mp4") != -1 
       ?minHeight = '25em' //for video
       :minHeight = '25em' //for mp3
@@ -116,14 +117,14 @@ uiGallery = MkUiComponent (function uiGallery(my){
                 ?h('iframe',{src: my.state.url,autoplay: false,style: {'min-height': minHeight,'min-width': '70%',border: 'none','display':'block',margin: '0 auto'}},)
                 :h(Image,{centered: true, bordered: true, src: my.state.url})
             :null
-            //h(Image,{size: 'big',centered: true,src: `${url}/${ArrayPrueba[0]}`})
           )
         )
       )
     )
   }
 });
-//recibe la lista de archivos y el evento 
+
+//U: recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
   console.log(my.props.revisiones, my.props.evento)
   var revisiones = my.props.revisiones;
@@ -139,7 +140,7 @@ uiIframe = MkUiComponent (function uiIframe(my){
 
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
-    my.setState({url: `${SERVERIP}/api/blk/protocols/revisarNivelesLiquidos/${fileName}`});
+    my.setState({url: `${SERVERIP}/${CfgFileUrl}/${fileName}`});
     fileName.search("mp4") != -1 
       ?minHeight = '25em' //for video
       :minHeight = '25em' //for mp4
@@ -396,81 +397,6 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 });
 
-//parte derecha muestra los 
-//TABLA VIEJA 
-// uiTabla= MkUiComponent(function uiTabla(my) { 
-//   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
-//   var columnas = 6;
-//   if(my.props.evento == "previa") columnas = 8;
-
-//   function tableRowClick (k) {
-//     revision=k.revisiones; 
-//     for (let index = 0; index < revision.length; index++) {
-//       if (revision[index].nombre == my.props.evento){
-//         if (revision[index].archivos.length > 0){
-//           listaArchivos = revision[index].archivos;
-//           my.setState({mostrarModal: true});
-//         }
-//       }    
-//     }
-//   }
-//   my.render= function (props, state) {
-//     return (
-//       h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
-//         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
-//           h(Table.Header,{},
-//             h(Table.Row,{},
-//               h(Table.HeaderCell,{colSpan: columnas},
-//               h(Icon,{name: 'file outline'}),
-//               `Event: ${my.props.evento}`,  
-//               )
-//             ),
-//             h(Table.Row,{},
-//               h(Table.HeaderCell,{},`Item Name`),
-//               h(Table.HeaderCell,{},`Reported`),
-//               h(Table.HeaderCell,{},`Inspected`),
-//               h(Table.HeaderCell,{},`Damaged`),
-//               h(Table.HeaderCell,{},`Missing`),
-//               my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Hall`):null,
-//               my.props.evento == "confronta2" ? h(Table.HeaderCell,{},`Shelf`):null,
-//               h(Table.HeaderCell,{},'Media')
-//             )
-//           ),
-//           h(Table.Body,{},
-//             my.props.guia.Items.map( k => 
-//               //h(Table.Row,{onClick: ()=>  my.props.selecRevisiones(k.revisiones),style:{cursor: 'pointer'}},
-//               h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
-//                 h(Table.Cell,{collapsing: true},
-//                   k.itemName
-//                 ),
-//                 k.revisiones.map( revision =>              
-//                   revision.nombre == my.props.evento ?
-//                     Object.entries(revision).map( ([k,v]) =>
-//                       v != my.props.evento && k != "archivos" ? 
-//                         h(Table.Cell,{collapsing: true,textAlign:'right'}, `${v}`) //A: el componente para esta ruta
-//                       :
-//                       null
-//                     ) : 
-//                   null  
-//                 ),
-//                 h(Table.Cell,{collapsing: true,textAlign:'right'},
-//                   h(Icon,{name:'folder'}),
-//                   'hola'
-//                 )
-//               )
-//             )  
-//           )
-//         ),
-//         //Modal para ver los archivos
-//         my.state.mostrarModal
-//         ? h(uiModal)
-//         : null   
-//       )           
-// 		)
-//   }
-// });
-
-
 //TABLA NUEVA
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
@@ -673,24 +599,6 @@ uiFiles = MkUiComponent( function uiFiles(my) {
     console.table(my.state)
     return(
         h('div', {id:'archivos',},
-          // listaArchivos.length > 0 
-          // ?
-          // h('div',{},
-          //   h(Button,{onClick: open},'abrir modal'),
-          //   h(Modal,{open: my.state.open},
-          //     h(Modal.Header,{},'Select a Photo'),
-          //     h(Modal.Content,{},
-          //       h('p',{},
-          //         'Your inbox is getting full, would you like us to enable automatic',
-          //         'archiving of old messages'
-          //       )
-          //     ),
-          //     h(Modal.Actions,{},
-          //       h(Button,{onClick: close()},'cerrar modal'),  
-          //     )
-          //   )
-          // )
-          // :h('h1',{style:{color: 'white'}},'No hay archivos')
           console.log(listaArchivos,eventoGlobal),
           h(uiIframe,{revisiones: listaArchivos, evento: eventoGlobal},)
         )   
@@ -720,7 +628,6 @@ App= MkUiComponent(function App(my) {
   }
 });
 //-----------------------------------------------------------------------------
-
 
 setTheme('chubby');
 render(h(App), document.body);
