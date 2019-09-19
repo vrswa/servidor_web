@@ -643,7 +643,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
             h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
             :
             h(Segment,{raised:true,loading: true},//placeholder para mostrar que esta cargando la informacion
-              h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`Manifest: 59264`),)))
+              h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`LOADING MANIFEST`),)))
             )
           ,
           my.state.guiaSeleccionada ?

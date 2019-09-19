@@ -18,6 +18,7 @@ var fileUpload = require('express-fileupload');
 const _path = require('path');
 var fetch = require('node-fetch');
 var crypto = require('crypto');
+var open = require('open');
 //const https = require('https');
 var https = require('follow-redirects').https; //VER: https://stackoverflow.com/questions/31615477/how-download-file-from-github-com-whith-nodejs-https
 //------------------------------------------------------------------
@@ -579,6 +580,8 @@ var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
 	var k;
 	for (k in if2addr) {
-	 	console.log(k+' : '+'http://'+if2addr[k]+':'+listener.address().port);
+		var url = 'http://'+if2addr[k]+':'+listener.address().port;
+	 	console.log(k+' : '+ url);
 	}
+	open(url);
 });
