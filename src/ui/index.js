@@ -295,7 +295,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
   my.render= function (props, state) {
     return (
       h('div',{},
-        h(Segment,{raised:true},
+        h(Segment,{raised:true,},
           h(Form,{},
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
@@ -642,7 +642,9 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           my.state.manifiesto ? 
             h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
             :
-            h('p',{},'')
+            h(Segment,{raised:true,loading: true},//placeholder para mostrar que esta cargando la informacion
+              h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`Manifest: 59264`),)))
+            )
           ,
           my.state.guiaSeleccionada ?
           h('div',{},
