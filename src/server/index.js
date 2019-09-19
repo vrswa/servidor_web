@@ -1,8 +1,11 @@
+//TODO : funciones asincronas name_a
+//TODO: no tendria que haber nombre de cliente hardcodeado
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
 CfgDbBaseDir = 'TGN/protocols'; //A: los protocolos se encuentran aqui
 CfgBlkDataSetDir = 'BLK/dataset';
 CfgBlkProtocolDir = 'BLK/protocols';
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
+CfgGithubEnabled = false;
 //URL de github para actualizar los archivos de protocolos y dataset
 GitProtocolDemoUrl = 'https://api.github.com/repos/vrswa/portalBLK/contents/Protocols/Demo';
 GitDatasetUrl ='https://api.github.com/repos/vrswa/portalBLK/contents/DataSets';
@@ -223,7 +226,8 @@ function guardarArchivos(arrayArchivos,ruta,callback){
 function githubFiles (url,savePath,callback){
 	//esto me devuelve un array de json
 	fetch(url)
-    .then(res => res.json())
+	.catch(error => callback("error") )
+	.then(res => res.json())
 	.then(infoArchivos => {
 			if(Array.isArray( infoArchivos)){
 				savedFileCounter = 0; 
@@ -246,16 +250,20 @@ function githubFiles (url,savePath,callback){
 
 //U: actuliza dataset o protocols de github
 function actualizarArchivos(DatasetUpdate,callback){
-	//eligo la url y la ruta donde voy a guardar
-	if (!DatasetUpdate){
-		var savePath  = rutaCarpeta(CfgBlkProtocolDir,'demo',null,null, true); //carpeta demo puede no estar creada
-		var url = GitProtocolDemoUrl;
-	}
+	if (!CfgGithubEnabled) callback();
 	else{
-		var savePath =  rutaCarpeta('BLK','dataset',null,null,true);
-		var url = GitDatasetUrl;
+		console.log("me sigo ejecutando")
+		if (!DatasetUpdate){
+			var savePath  = rutaCarpeta(CfgBlkProtocolDir,'demo',null,null, true); //carpeta demo puede no estar creada
+			var url = GitProtocolDemoUrl;
+		}
+		else{
+			var savePath =  rutaCarpeta('BLK','dataset',null,null,true);
+			var url = GitDatasetUrl;
+		}
+		//A:URL tiene la ruta donde voy a grabar
+		githubFiles(url,savePath,callback)
 	}
-	githubFiles(url,savePath,callback)
 }
 //--------------------------------------------------------------------
 var app = express();
