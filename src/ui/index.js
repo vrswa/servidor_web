@@ -5,8 +5,6 @@ rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
-
-
 //INSPECTION NAMES
 INSPECTION1 = "Inspection 1";
 INSPECTION2 = "Inspection 2";
@@ -145,7 +143,6 @@ uiIframe = MkUiComponent (function uiIframe(my){
       ?minHeight = '25em' //for video
       :minHeight = '25em' //for mp4
   }
-
   function buscarIndex (fileName){
     for (let index = 0; index < archivos.length; index++) {
       if(archivos[index] == fileName)
@@ -512,8 +509,13 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   async function obtenerManifiesto (){   
     var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
-    var json = await res.json();
-    my.setState({manifiesto: json}); 
+    try {
+      var json = await res.json();
+      my.setState({manifiesto: json}); 
+    } catch (error) {
+      my.setState({JsonError: true})
+    }
+    
   }
   //cambio el fondo
   my.componentWillMount = function () {
@@ -565,12 +567,20 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     return (
       h(Container, {},
         h(uiMenu,{}),
+          my.state.JsonError ? 
+          h(Segment,{},'JSON FORMAT ERROR, please fix the JSON and reload')
+          :
+          null
+          ,
           my.state.manifiesto ? 
             h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
             :
-            h(Segment,{raised:true,loading: true},//placeholder para mostrar que esta cargando la informacion
-              h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`LOADING MANIFEST`),)))
-            )
+            my.state.JsonError ?
+              null
+              : 
+              h(Segment,{raised:true,loading: true},//placeholder para mostrar que esta cargando la informacion
+                h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`LOADING MANIFEST`),)))
+              )
           ,
           my.state.guiaSeleccionada ?
           h('div',{},
