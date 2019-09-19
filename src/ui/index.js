@@ -584,7 +584,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){   
-    //var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
+    var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
     var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
     var json = await res.json();
     my.setState({manifiesto: json}); 
