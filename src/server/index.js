@@ -12,7 +12,7 @@ var bodyParser = require('body-parser');
 var os = require('os'); //A: para interfases
 var fs = require('fs');
 var fileUpload = require('express-fileupload');
-var path = require('path');
+const _path = require('path');
 var fetch = require('node-fetch');
 var crypto = require('crypto');
 //const https = require('https');
@@ -48,7 +48,7 @@ function leerMisiones (rutaOrigen){
 	var r = new Array();
 	fs.readdirSync(rutaOrigen).forEach(protocolo => {
 		protocolo = protocolo || [];
-		var rutaProtocolo = path.join(rutaOrigen,protocolo);
+		var rutaProtocolo = _path.join(rutaOrigen,protocolo);
 		fs.readdirSync(rutaProtocolo).forEach(file => {
 			file = file || [];
 			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
@@ -219,26 +219,34 @@ function guardarArchivos(arrayArchivos,ruta,callback){
 	});	
 }
 
+//U: descargar los archivos desde 'url' y los guarda en 'savePath'
 function githubFiles (url,savePath,callback){
 	//esto me devuelve un array de json
 	fetch(url)
     .then(res => res.json())
 	.then(infoArchivos => {
-			savedFileCounter = 0; 
-			infoArchivos.forEach( function(info){
-				downloadFile(info.download_url,`${savePath}/${info.name}`).then( () => {	
-						savedFileCounter ++;
-						if(savedFileCounter == infoArchivos.length){	
-							callback();
+			if(Array.isArray( infoArchivos)){
+				savedFileCounter = 0; 
+				infoArchivos.forEach( function(info){
+					downloadFile(info.download_url,`${savePath}/${info.name}`).then( () => {	
+							savedFileCounter ++;
+							if(savedFileCounter == infoArchivos.length){	
+								callback();
+							}
 						}
-					}
-				)
-			})
+					)
+				})
+			}else{
+				console.log("error corran!")
+				callback("error")
+			}
 		}
 	);
 }
 
+//U: actuliza dataset o protocols de github
 function actualizarArchivos(DatasetUpdate,callback){
+	//eligo la url y la ruta donde voy a guardar
 	if (!DatasetUpdate){
 		var savePath  = rutaCarpeta(CfgBlkProtocolDir,'demo',null,null, true); //carpeta demo puede no estar creada
 		var url = GitProtocolDemoUrl;
@@ -417,9 +425,22 @@ app.post('/api/protocols/:protocolsId',(req,res) => {
 //devuelva la lista con los nombres de archivos que estan dentro de la carpeta blk/dataset
 // http://192.168.1.199:8888/api/blk/dataset
 app.get('/api/blk/dataset',(req,res) => {
-	actualizarArchivos(true,() => 
-		res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
+	try {
+		actualizarArchivos(true,(err) => 
+		{
+			if (err){
+				console.log("enviando dataset antiguo")
+				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
+			}else{
+				console.log("enviando dataset actualizado");
+				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
+			}			
+		}
 	)
+	} catch (error) {
+		console.log("FALLO: ", error);
+		res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))
+	}
 });
 
 //devuelve un archivo que esta dentro de la carpeta blk/dataset
@@ -428,7 +449,7 @@ app.get('/api/blk/dataset/:datasetId',(req,res) => {
 	datasetId = req.params.datasetId;
 	var ruta = rutaCarpeta(CfgBlkDataSetDir,datasetId,null,null,false);
 	if (ruta){
-		let reqPath = path.join(__dirname, '../../', ruta);
+		let reqPath = `${process.cwd()}/${ruta}`
 		console.log(reqPath);
         res.sendFile(reqPath)
 	}else{
@@ -439,11 +460,33 @@ app.get('/api/blk/dataset/:datasetId',(req,res) => {
 //devuelve un array con los JSON de todos los protocolos
 // http://192.168.1.199:8888/api/blk/protocols
 app.get('/api/blk/protocols',(req,res) => {
-	actualizarArchivos(false,() => 
+	// actualizarArchivos(false,() => 
+	// 	leerJsonProtocols(CfgBlkProtocolDir, function(vector){
+	// 		res.send(vector)
+	// 	})
+	// )
+	try {
+		actualizarArchivos(false,(err) => 
+		{
+			if (err){
+				console.log("enviando dataset antiguo")
+				leerJsonProtocols(CfgBlkProtocolDir, function(vector){
+					res.send(vector)
+				})
+			}else{
+				console.log("enviando dataset actualizado");
+				leerJsonProtocols(CfgBlkProtocolDir, function(vector){
+					res.send(vector)
+				})
+			}			
+		}
+	)
+	} catch (error) {
+		console.log("FALLO: ", error);
 		leerJsonProtocols(CfgBlkProtocolDir, function(vector){
 			res.send(vector)
 		})
-	)
+	}
 });
 
 //devuelve una lista con los nombres de los archivos dentro de blk/protocols/porcolID
@@ -463,10 +506,14 @@ app.get('/api/blk/protocols/:protocolsId',async (req,res) => {
 // http://192.168.1.199:8888/api/blk/protocols/revisarFiltros/engine.jpg
 app.get('/api/blk/protocols/:protocolId/:file',async (req,res) => {
 	var rutaArchivo = rutaCarpeta(CfgBlkProtocolDir, req.params.protocolId, null,req.params.file,false);
+	
 	if (fs.existsSync(rutaArchivo)){
-		console.log("archivo pedido: ", req.params.file);
-		res.set('fileName', req.params.file);	
-		res.status(200).sendFile(path.resolve(rutaArchivo)); //res.sendfile considera "../" como corrupto
+		console.log("ruta creada:  ", rutaArchivo);
+		res.set('fileName', req.params.file);
+		//let reqPath = path.join(process.cwd(), rutaArchivo);
+		let reqPath = `${process.cwd()}/${rutaArchivo}`
+		console.log("ruta final:  ", reqPath);
+		res.status(200).sendFile(reqPath); //res.sendfile considera "../" como corrupto
 	}else{
 		res.status(404).send("no file or Mission");
 	}
