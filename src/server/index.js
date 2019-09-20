@@ -18,6 +18,7 @@ var fileUpload = require('express-fileupload');
 const _path = require('path');
 var fetch = require('node-fetch');
 var crypto = require('crypto');
+var fsExtra = require('fs-extra');
 var open = require('open');
 //const https = require('https');
 var https = require('follow-redirects').https; //VER: https://stackoverflow.com/questions/31615477/how-download-file-from-github-com-whith-nodejs-https
@@ -573,6 +574,31 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 		res.send('not files')
 	}
 })
+
+app.post('/api/blk/pedazosDeInfo',(req,res) => {
+	
+	ruta = _path.join(__dirname, '..','..' ,'prueba/prueba.txt');
+	frase = "123";
+	buffer = new Buffer(frase);
+
+	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
+		if (err) console.log(err) // => null
+		
+		fs.open(ruta, 'r+', function(err, fd) {
+			if (err) {
+				throw 'error opening file: ' + err;
+			}
+			fs.write(fd, buffer, 0, buffer.length, 0, function(err) {
+				if (err) throw 'error writing file: ' + err;
+				fs.close(fd, function() {
+					res.send('file written');
+				})
+			});
+		});
+	})
+
+	
+})
  
 //-----------------------------------------------------------------------------------
 //SEE: listen for requests :)
@@ -583,5 +609,5 @@ var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 		var url = 'http://'+if2addr[k]+':'+listener.address().port;
 	 	console.log(k+' : '+ url);
 	}
-	open(url);
+	//open(url);
 });
