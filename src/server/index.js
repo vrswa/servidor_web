@@ -57,7 +57,7 @@ function leerMisiones (rutaOrigen){
 		fs.readdirSync(rutaProtocolo).forEach(file => {
 			file = file || [];
 			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
-				var rutaProtocoloMision = path.join(rutaProtocolo,file);
+				var rutaProtocoloMision = _path.join(rutaProtocolo,file);
 				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
 					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
 						mision = mision || [];
@@ -207,7 +207,7 @@ function guardarArchivos(arrayArchivos,ruta,callback){
 	});
 	files.forEach(archivo => {
 		archivo.name = limpiarFname(archivo.name, ".dat"); 
-		var rutaArchivo = path.join(ruta,archivo.name);
+		var rutaArchivo = _path.join(ruta,archivo.name);
 		//A: ruta carpeta limpia path (que no tenga .. exe js )
 		//A : el tamaño maximo se controla con CfgUploadSzMax	
 		archivo.mv( rutaArchivo, err => {
@@ -347,7 +347,7 @@ app.get('/api/protocols/:protocolId',(req,res) => {
 //curl "http://localhost:8888/api/protocols/revisarFiltros/missions"
 app.get('/api/protocols/:protocolId/missions',(req,res) => {
 	var ruta = rutaCarpeta(CfgDbBaseDir,req.params.protocolId,null,null,false);
-	if (ruta) ruta = path.join(ruta, "missions");
+	if (ruta) ruta = _path.join(ruta, "missions");
 	
 	if (!ruta) res.status(400).send('not file or directory');
 
@@ -439,10 +439,8 @@ app.get('/api/blk/dataset',(req,res) => {
 		actualizarArchivos(true,(err) => 
 		{
 			if (err){
-				console.log("enviando dataset antiguo")
 				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
 			}else{
-				console.log("enviando dataset actualizado");
 				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
 			}			
 		}
@@ -580,7 +578,7 @@ app.post('/api/blk/fileChunk',(req,res) => {
 	informacion = req.body.informacion;
 	offset = parseInt( req.body.offset );
 	ruta = _path.join(process.cwd(),ruta);
-	buffer = new Buffer(informacion);
+	buffer = new Buffer.from(informacion);
 
 	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
 		if (err) console.log(err) // => null
