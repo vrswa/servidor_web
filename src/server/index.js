@@ -579,8 +579,7 @@ app.post('/api/blk/fileChunk',(req,res) => {
 	ruta = req.body.ruta;
 	informacion = req.body.informacion;
 	offset = parseInt( req.body.offset );
-	
-	ruta = _path.join(__dirname, '..','..' ,ruta);
+	ruta = _path.join(process.cwd(),ruta);
 	buffer = new Buffer(informacion);
 
 	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
@@ -599,6 +598,7 @@ app.post('/api/blk/fileChunk',(req,res) => {
 				fs.close(fd, function() {
 					res.send({
 						ok: true,
+						ruta: ruta,
 						bytesSend: buffer.length,
 						bytesWritten: bytesWritten
 					});
