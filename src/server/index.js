@@ -591,7 +591,11 @@ app.post('/api/blk/fileChunk',(req,res) => {
 				throw 'error opening file: ' + err;
 			}
 			fs.write(fd, buffer, 0, buffer.length, offset, function(err,bytesWritten) {
-				if (err) throw 'error writing file: ' + err;
+				if (err) res.send({
+					ok: false,
+					err: err
+				})
+
 				fs.close(fd, function() {
 					res.send({
 						ok: true,
@@ -613,5 +617,5 @@ var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 		var url = 'http://'+if2addr[k]+':'+listener.address().port;
 	 	console.log(k+' : '+ url);
 	}
-	//open(url);
+	open(url);
 });
