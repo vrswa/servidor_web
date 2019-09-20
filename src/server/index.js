@@ -576,10 +576,12 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 })
 
 app.post('/api/blk/pedazosDeInfo',(req,res) => {
-	
-	ruta = _path.join(__dirname, '..','..' ,'prueba/prueba.txt');
-	frase = "123";
-	buffer = new Buffer(frase);
+	ruta = req.body.ruta;
+	informacion = req.body.informacion;
+	offset = parseInt( req.body.offset );
+	console.log(ruta, informacion, offset)
+	ruta = _path.join(__dirname, '..','..' ,ruta);
+	buffer = new Buffer(informacion);
 
 	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
 		if (err) console.log(err) // => null
@@ -588,7 +590,7 @@ app.post('/api/blk/pedazosDeInfo',(req,res) => {
 			if (err) {
 				throw 'error opening file: ' + err;
 			}
-			fs.write(fd, buffer, 0, buffer.length, 0, function(err) {
+			fs.write(fd, buffer, 0, buffer.length, offset, function(err) {
 				if (err) throw 'error writing file: ' + err;
 				fs.close(fd, function() {
 					res.send('file written');
@@ -596,8 +598,6 @@ app.post('/api/blk/pedazosDeInfo',(req,res) => {
 			});
 		});
 	})
-
-	
 })
  
 //-----------------------------------------------------------------------------------
