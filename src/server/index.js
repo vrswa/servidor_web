@@ -575,11 +575,11 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 	}
 })
 
-app.post('/api/blk/pedazosDeInfo',(req,res) => {
+app.post('/api/blk/fileChunk',(req,res) => {
 	ruta = req.body.ruta;
 	informacion = req.body.informacion;
 	offset = parseInt( req.body.offset );
-	console.log(ruta, informacion, offset)
+	
 	ruta = _path.join(__dirname, '..','..' ,ruta);
 	buffer = new Buffer(informacion);
 
@@ -590,10 +590,14 @@ app.post('/api/blk/pedazosDeInfo',(req,res) => {
 			if (err) {
 				throw 'error opening file: ' + err;
 			}
-			fs.write(fd, buffer, 0, buffer.length, offset, function(err) {
+			fs.write(fd, buffer, 0, buffer.length, offset, function(err,bytesWritten) {
 				if (err) throw 'error writing file: ' + err;
 				fs.close(fd, function() {
-					res.send('file written');
+					res.send({
+						ok: true,
+						bytesSend: buffer.length,
+						bytesWritten: bytesWritten
+					});
 				})
 			});
 		});
