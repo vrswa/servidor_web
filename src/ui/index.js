@@ -547,12 +547,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     var guiaSeleccionada = buscarGuia(guiaId);
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
-  function cambiarArchivo (nombreArchivo){
-    my.setState({
-      ...my.state,
-      archivo: nombreArchivo
-    })
-  }
+  
   function seleccionarEvento(evento, limpiar){
     eventoGlobal = evento;
     if(limpiar){
@@ -587,7 +582,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           my.state.guiaSeleccionada ?
           h('div',{},
             h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.nombre}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
-            h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
+            h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
           )
           :
           null,
