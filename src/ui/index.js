@@ -1,5 +1,7 @@
 SERVERIP = 'http://localhost:8888';
-CfgFileUrl = 'api/blk/protocols/revisarNivelesLiquidos';
+
+CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
+CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
 //colores rgb de la empresa BLK
 rgbColors = {
   azulOscuro: 'rgb(56,87,162)',
@@ -327,7 +329,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       /*********************************************************/
       h(Segment,{clearing:true,style:{'max-height': '152px'}},
         h('p',{style:{fontSize: '15px'}},
-          h('b',{style:{'font-size':'20px'}},'Event: Pre Inspection'),
+          h('b',{style:{'font-size':'20px'}},'Event: To be Inspected'),
           h('div',{},
             h('b',{style:{'margin-top': '5px'}},' Origin Airport:'),
             guia.OriginAirport,
@@ -507,8 +509,8 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){   
-    var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
-    var res = await fetch(`${SERVERIP}/api/blk/dataset/ManifestExample1.json`);
+    //var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
+    var res = await fetch(`${SERVERIP}/${CfgManifestUrl}`);
     try {
       var json = await res.json();
       my.setState({manifiesto: json}); 
