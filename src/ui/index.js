@@ -8,6 +8,7 @@ rgbColors = {
   azulClaro: 'rgb(105,178,226)',
 }
 //INSPECTION NAMES
+PALLETINSPECTION = "Inspection pallet";
 INSPECTION1 = "Inspection 1";
 INSPECTION2 = "Inspection 2";
 INSPECTION3 = "Inspection 3";
@@ -93,9 +94,7 @@ uiGallery = MkUiComponent (function uiGallery(my){
   function createLink(fileName){
     //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
     my.setState({url: `${SERVERIP}/${CfgFileUrl}/${fileName}`});
-    fileName.search("mp4") != -1 
-      ?minHeight = '25em' //for video
-      :minHeight = '25em' //for mp3
+    minHeight = '25em';
   }
 
   my.render = function(){
@@ -120,95 +119,6 @@ uiGallery = MkUiComponent (function uiGallery(my){
           )
         )
       )
-    )
-  }
-});
-
-//U: NO utilizado, recibe la lista de archivos y el evento 
-uiIframe = MkUiComponent (function uiIframe(my){
-  console.log(my.props.revisiones, my.props.evento)
-  var revisiones = my.props.revisiones;
-  var evento = my.props.evento;
-  var archivos;
-  var minHeight;
-  //se selecciona los archivos de la revision correspondiente
-  for (let index = 0; index < revisiones.length; index++) {
-    if(revisiones[index].nombre == evento){
-      archivos = revisiones[index].archivos;
-    }
-  }
-
-  function createLink(fileName){
-    //http://192.168.1.196:8888/api/blk/protocols/revisarNivelesLiquidos/motor.jpg
-    my.setState({url: `${SERVERIP}/${CfgFileUrl}/${fileName}`});
-    fileName.search("mp4") != -1 
-      ?minHeight = '25em' //for video
-      :minHeight = '25em' //for mp4
-  }
-  function buscarIndex (fileName){
-    for (let index = 0; index < archivos.length; index++) {
-      if(archivos[index] == fileName)
-       return index; 
-    }
-    return -1;
-  }
-
-  function lastSlashPos(url){
-    for (let index = url.length-1; index >= 0; index--) {
-      if(url[index] == '/') return index;
-    }
-    return -1;
-  }
-
-  function namePos (url){
-    lastSlash = lastSlashPos(url);
-    fileName = url.substring(lastSlash + 1);
-    return buscarIndex(fileName)
-  }
-
-  function cambiarUrlAdelante (){
-    urlActual = my.state.url;
-    fileNamePos = namePos(urlActual);
-    fileNamePos == archivos.length - 1 
-      ? newPos = 0
-      : newPos = ++fileNamePos;
-    console.log(archivos[newPos])
-    createLink(archivos[newPos])
-  }
-  function cambiarUrlAtras (){
-    urlActual = my.state.url;
-    fileNamePos = namePos(urlActual);
-    fileNamePos == 0 
-      ? newPos = archivos.length - 1
-      : newPos = --fileNamePos;
-    createLink(archivos[newPos])
-  }
-  my.render = function(){
-    return (
-      h('div',{style:{'margin-top': '3%', 'min-height': '20em'}},
-        h(Button,{onClick: () => preactRouter.route("/menu"), floated:'right',style:{"background-color": "rgb(105, 178, 226)",color: "rgb(255, 255, 255)"}},'Return'),
-        archivos == undefined
-        ? h('p',{style:{'font-size':'20px',color: 'rgb(255,255,255)'}},'Go back and Select another Item')
-        :h('div',{},
-          h('h1',{style:{color: 'rgb(255,255,255)'}},'Media available'),
-          archivos.map( fileName => h(Button,{onClick: () => createLink(fileName)}, fileName) )
-        )
-        ,
-        my.state.url ?
-        h(Grid,{style:{'margin-top': '3%'},columns: 'three',centered: true},
-          h(Grid.Row,{centered: true},
-            h(Grid.Column,{width: 'seven'},
-              //'min-width': '35em'
-              h('iframe',{src: my.state.url,autoplay: false,style: {'min-height': minHeight,'min-width': '35em', border: 'none'}},)  
-            ),
-          ),
-          h(Grid.Row,{centered: true},
-            h(Button,{onClick: () => cambiarUrlAtras()},'cambiar url'),
-            h(Button,{onClick: () => cambiarUrlAdelante()},'cambiar url')
-          )
-        ):
-        null
-      )  
     )
   }
 });
@@ -281,9 +191,9 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 uiSelects = MkUiComponent(function uiSelects(my,props) {
   const options = props.manifiesto.map( guia => 
       { return {
-        key: guia.nombre,
-        text:  guia.nombre,
-        value:  guia.nombre
+        key: guia.id,
+        text:  guia.id,
+        value:  guia.id
       }
     }
   )
@@ -312,16 +222,18 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
 
 //parte izquierda del grid muestra el estado de la guia
 uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
-  
+  console.log("----PROPS-----")
+  console.log(my.props.GuiaDeEmbarque)
   my.render= function (props, state) {
-    if (props.GuiaDeEmbarque ){
+    if (my.props.GuiaDeEmbarque ){
       my.state = {
         ...my.state,
         GuiaDeEmbarque: my.props.GuiaDeEmbarque
       }
       guia = my.state.GuiaDeEmbarque;
     }
-    console.log(props.GuiaDeEmbarque)
+    console.log("-----GUIA-----")
+    console.log(guia)
   return (
     h('div', {id:'app'},
     my.state.GuiaDeEmbarque ? 
@@ -346,7 +258,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
             h('p',{style:{fontSize: '13px',}},
 
               h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},'Items: '),
-              guia.Items.length), 
+              guia.items.length), 
             ),
             ),
             h(Grid.Column,{},
@@ -361,6 +273,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       /******************************************************* */
 
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
+            k.nombre != PALLETINSPECTION || (k.nombre == PALLETINSPECTION && k.problem == true) ? 
             h(Segment,{clearing:true,style:{'max-height': '152px'}},
               h('p',{style:{fontSize: '15px'}},
                 h('b',{style:{'font-size':'20px'}},'Event: ',k.nombre),
@@ -392,7 +305,11 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                 )
               )
             )
+            : 
+            null
           )
+           
+          
         )
         :
         h('h1',{},'Select a Air Waybill')
@@ -442,7 +359,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
             )
           ),
           h(Table.Body,{},
-            my.props.guia.Items.map( k => 
+            my.props.guia.items.map( k => 
               k.revisiones.map( revision =>              
                 revision.nombre == my.props.evento ?
                   ( 
@@ -518,7 +435,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     var res = await fetch(`${SERVERIP}/${CfgManifestUrl}`);
     try {
       var json = await res.json();
-      my.setState({manifiesto: json}); 
+      my.setState({manifiesto: json[0]}); 
     } catch (error) {
       my.setState({JsonError: true})
     }
@@ -538,10 +455,11 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
 
   //buscar una guia con su ID dentro de un manifiesto
   function buscarGuia( guiaId){
-    listaGuias = my.state.manifiesto.GuiasDeEmbarque;
+    listaGuias = my.state.manifiesto.guides;
     //tengo un array de json que tiene la informacion de las guias
     for (let index = 0; index < listaGuias.length; index++) {
-        if( listaGuias[index].nombre == guiaId){
+        if( listaGuias[index].id == guiaId){
+          console.log(listaGuias[index]) 
           return listaGuias[index]
         }
     }
@@ -556,7 +474,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     var guiaSeleccionada = buscarGuia(guiaId);
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
-  
 
   function seleccionarEvento(evento, limpiar){
     eventoGlobal = evento; //el eventoGlobal me indica que archivos quiero ver, archivos de confronta1, confrota2 o previa
@@ -576,7 +493,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           null
           ,
           my.state.manifiesto ? 
-            h(uiSelects,{manifiesto: my.state.manifiesto.GuiasDeEmbarque, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.manifiestoId},)
+            h(uiSelects,{manifiesto: my.state.manifiesto.guides, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.id},)
             :
             my.state.JsonError ?
               null
@@ -587,7 +504,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           ,
           my.state.guiaSeleccionada ?
           h('div',{},
-            h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.nombre}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
+            h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.id}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
             h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
           )
           :
@@ -597,12 +514,10 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   }
 });
 
-
 //RUTA DE PREACT ROUTE
 Rutas= {
   "/":{cmp: uiLogin},
   "/menu": {cmp: uiClientPortal},
-  
 }
 //-----------------------------------------------------------------------------
 App= MkUiComponent(function App(my) {
