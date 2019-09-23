@@ -427,7 +427,6 @@ app.post('/api/protocols/:protocolsId',(req,res) => {
 	}else{
 		res.send('not files')
 	}
-	
 })
 
 //---------------------------------------BLK APIS------------------------------------
@@ -530,7 +529,6 @@ app.get('/api/blk/protocols/:protocolId/:file',async (req,res) => {
 //U: se devuelven los datos de los JSON de todas la misiones
 // http://192.168.1.199:8888/api/blk/missions
 app.get('/api/blk/missions',(req,res) => {
-	
 	r = leerMisiones(CfgBlkProtocolDir);
 	res.send(r);
 });
@@ -547,6 +545,23 @@ app.get('/api/blk/protocols/:protocolId/missions/:missionId',(req,res) => {
 	}
 })
 
+//U: se devuelve un archivo de una mision
+app.get('/api/blk/protocols/:protocolId/missions/:missionId/:file',(req,res) => {
+	var protocoloId = req.params.protocolId;
+	var missionId = req.params.missionId;
+	var file  = req.params.file;
+
+	var ruta = rutaCarpeta(CfgBlkProtocolDir,protocoloId,missionId,file,false);
+	if (fs.existsSync(ruta)){
+		res.set('fileName', req.params.file);	
+		res.status(200).sendFile(_path.resolve(ruta));
+	}else{
+		res.send("not file or directory");
+	}
+	
+})
+
+
 //nos envian via POST uno o varios archivos de una mission
 app.post('/api/blk/protocols/:protocolsId/missions/:missionId',(req,res) => {	
 	var protocolsId = req.params.protocolsId;
@@ -556,7 +571,7 @@ app.post('/api/blk/protocols/:protocolsId/missions/:missionId',(req,res) => {
 	//A: sino me mandaron nigun file devolvi 400
 	var ruta = rutaCarpeta(CfgBlkProtocolDir,protocolsId,missionId,null,true);
 	guardarArchivos(req.files,ruta,function(vectorHashes){
-		return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+		return res.status(200).send({'ok': true, 'hashes': vectorHashes}); //A: envio tambien HASH
 	})
 });
 
