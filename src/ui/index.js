@@ -22,7 +22,7 @@ function setTheme(t) {
               
 //VARIABLES PARA COMUNICACION ENTRE componentes
 var usuarioFormularioIngreso = '';
-var listaArchivos = '';
+var listaArchivos = ''; //A: contiene la lista de archivos que quiero mostrar en el modal
 var eventoGlobal;
 
 //componente que muestra un modal y llama a uiGaleria
@@ -407,8 +407,8 @@ uiTabla= MkUiComponent(function uiTabla(my) {
     for (let index = 0; index < revision.length; index++) {
       if (revision[index].nombre == my.props.evento){
         if (revision[index].archivos.length > 0){
-          listaArchivos = revision[index].archivos;
-          my.setState({mostrarModal: true});
+          listaArchivos = revision[index].archivos; //A: guardo en la variable la lista de archivos que quiero mostrar
+          my.setState({mostrarModal: true});        //A: y muestro el modal
         }
       }    
     }
@@ -519,16 +519,19 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }
     
   }
+
   //cambio el fondo
   my.componentWillMount = function () {
     var body = document.getElementsByTagName('body')[0];
     body.style.backgroundColor = 'rgb(49, 84, 165)';
   }
+
   //caundo se monta el componente cargo la informacion
   my.componentDidMount = async function () {
     await obtenerManifiesto();
   }
-  //buscar una guia dentro de un manifiesto
+
+  //buscar una guia con su ID dentro de un manifiesto
   function buscarGuia( guiaId){
     listaGuias = my.state.manifiesto.GuiasDeEmbarque;
     //tengo un array de json que tiene la informacion de las guias
@@ -538,7 +541,8 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
         }
     }
   }
-  //funciona cambia la guia
+  
+  //U: con el id , se cambia la guia en el state
   function cambiarGuiaSeleccionada (guiaId,limpiar){
     if(limpiar){
       my.setState({archivo: null, revisiones: null}),
@@ -548,8 +552,9 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
   
+
   function seleccionarEvento(evento, limpiar){
-    eventoGlobal = evento;
+    eventoGlobal = evento; //el evento me indica que archivos quiero ver, archivos de confronta1, confrota2 o previa
     if(limpiar){
       my.setState({archivo: null, revisiones: null})     
     }
@@ -586,11 +591,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           )
           :
           null,
-          my.state.revisiones ?
-          //preactRouter.route("/files",{info: "daniel"})
-            h(uiIframe,{evento: my.state.evento, revisiones: my.state.revisiones})
-          :
-            null
       )
 		);
   }
