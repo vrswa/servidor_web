@@ -124,7 +124,7 @@ uiGallery = MkUiComponent (function uiGallery(my){
   }
 });
 
-//U: recibe la lista de archivos y el evento 
+//U: NO utilizado, recibe la lista de archivos y el evento 
 uiIframe = MkUiComponent (function uiIframe(my){
   console.log(my.props.revisiones, my.props.evento)
   var revisiones = my.props.revisiones;
@@ -327,6 +327,8 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     my.state.GuiaDeEmbarque ? 
       h('div',{},
       /*********************************************************/
+      //  Pre inspection Card
+      /****************************************************** */
       h(Segment,{clearing:true,style:{'max-height': '152px'}},
         h('p',{style:{fontSize: '15px'}},
           h('b',{style:{'font-size':'20px'}},'Event: To be Inspected'),
@@ -355,6 +357,9 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
         )
       ),
       /******************************************************* */
+      //  END pre inspection Card
+      /******************************************************* */
+
       my.state.GuiaDeEmbarque.inspeccion.map((k,index) => 
             h(Segment,{clearing:true,style:{'max-height': '152px'}},
               h('p',{style:{fontSize: '15px'}},
@@ -396,7 +401,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 });
 
-//TABLA NUEVA
+//A: tabla que muestra el estado de los items
 uiTabla= MkUiComponent(function uiTabla(my) { 
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 6;
@@ -505,7 +510,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
   }
 });
 
-//llama a los demas componente que muestran el portal de guias
+//llama a los demas componentes que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){   
