@@ -588,6 +588,7 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 	}
 })
 
+//A se mandam bytes de informacion, la ruta y el offset para guardar en un archivo 
 app.post('/api/blk/fileChunk',(req,res) => {
 	ruta = req.body.ruta;
 	informacion = req.body.informacion;
