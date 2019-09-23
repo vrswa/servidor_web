@@ -499,7 +499,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
           ),
           h(Grid.Column,{width: '9'},
             my.props.evento ?  
-              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo, selecRevisiones: my.props.selecRevisiones})
+              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
               : 
               null
               //h(Header,{style:{color: 'rgb(255,255,255)'},textAlign:'center',size: 'huge'},'Select a Event')
@@ -559,15 +559,11 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   
 
   function seleccionarEvento(evento, limpiar){
-    eventoGlobal = evento; //el evento me indica que archivos quiero ver, archivos de confronta1, confrota2 o previa
+    eventoGlobal = evento; //el eventoGlobal me indica que archivos quiero ver, archivos de confronta1, confrota2 o previa
     if(limpiar){
       my.setState({archivo: null, revisiones: null})     
     }
     my.setState({evento: evento})
-  }
-
-  function selecRevisiones(revisiones){
-    my.setState({revisiones: revisiones})
   }
 
   my.render= function (props, state) {
@@ -592,7 +588,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           my.state.guiaSeleccionada ?
           h('div',{},
             h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.nombre}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
-            h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada, seleccionarEvento: seleccionarEvento, evento: my.state.evento,selecRevisiones: selecRevisiones})
+            h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
           )
           :
           null,
@@ -601,27 +597,12 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   }
 });
 
-uiFiles = MkUiComponent( function uiFiles(my) {
- 
-  close = () => my.setState({ open: false });
-  open = () => my.setState({ open: true })
-
-  my.render = function(props,state){
-    
-    console.table(my.state)
-    return(
-        h('div', {id:'archivos',},
-          console.log(listaArchivos,eventoGlobal),
-          h(uiIframe,{revisiones: listaArchivos, evento: eventoGlobal},)
-        )   
-    )}
-});
 
 //RUTA DE PREACT ROUTE
 Rutas= {
   "/":{cmp: uiLogin},
   "/menu": {cmp: uiClientPortal},
-  "/files":{cmp: (props) => h(uiFiles,{...props})}
+  
 }
 //-----------------------------------------------------------------------------
 App= MkUiComponent(function App(my) {
