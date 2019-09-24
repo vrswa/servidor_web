@@ -353,6 +353,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
               h(Table.HeaderCell,{},`Inspected`),
               h(Table.HeaderCell,{},`Damaged`),
               h(Table.HeaderCell,{},`Missing`),
+              h(Table.HeaderCell,{},`excess`),
               my.props.evento == INSPECTION2 ? h(Table.HeaderCell,{},`Hall`):null,
               my.props.evento == INSPECTION2 ? h(Table.HeaderCell,{},`Shelf`):null,
               h(Table.HeaderCell,{},'Media')
@@ -369,6 +370,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada ? revision.dañada : '-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante ? revision.faltante : '-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inExcess ? revision.inExcess : '-'}`),
                     revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
                     revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
 
