@@ -180,9 +180,12 @@ uiMenu= MkUiComponent(function uiMenu(my) {
           ),
           h(Menu.Item,{},
             //onClick="window.location.reload()
+            //refresh
             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': rgbColors.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
-            h(Button, {onClick: () =>window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},"Refresh" ),
-            
+            h(Button, {icon: true,labelPosition:'left',onClick: () =>window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},
+              h(Icon,{name:'refresh'}),
+              "Refresh" 
+            )
           )
         ),
       )
@@ -336,8 +339,6 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
             : 
             null
           )
-           
-          
         )
         :
         h('h1',{},'Select a Air Waybill')
@@ -528,9 +529,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
             my.state.JsonError ?
               null
               : 
-              h(Segment,{raised:true,loading: true},//placeholder para mostrar que esta cargando la informacion
-                h(Form,{},h(Form.Group,{}, h(Form.Field, {inline: true},h(Label,{},`LOADING MANIFEST`),)))
-              )
+              h(Segment,{},'JSON FORMAT ERROR, please fix the JSON and reload')
           ,
           my.state.guiaSeleccionada ?
           h('div',{},
