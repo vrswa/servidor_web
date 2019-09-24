@@ -1,5 +1,5 @@
 SERVERIP = 'http://localhost:8888';
-
+//new date(JSONDATA) = DATE OBJECT
 CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
 CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
 //colores rgb de la empresa BLK
@@ -234,6 +234,16 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       my.props.seleccionarEvento(nombreEvento,true)
     }
   }
+
+  function JSONtoDATE(JSONdate){
+    let fecha = new Date(JSONdate);
+    return  `${fecha.getDate()}/${fecha.getMonth()}/${fecha.getFullYear()}`;
+  }
+
+  function JSONtoHour(JSONdate){
+    let date = new Date(JSONdate);
+    return `${date.getHours()}:${date.getMinutes()}`;
+  }
   my.render= function (props, state) {
     if (my.props.GuiaDeEmbarque ){
       my.state = {
@@ -304,13 +314,13 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                   h('p',{style:{fontSize: '13px',}},
 
                     h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},'Date: '),
-                    k.fechaInicio ? k.fechaInicio : '-'), 
+                    k.fechaInicio ? JSONtoDATE(k.fechaInicio) : '-'), 
 
                     h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},' Start time: '),
-                    k.horaInicio ? k.horaInicio : '-'),
+                    k.fechaInicio ? JSONtoHour(k.fechaInicio) : '-'),
 
                     h('div',{},h('b',{style:{color: rgbColors.azulOscuro}},' End time: '),
-                    k.horaFinalizacion ? k.horaFinalizacion : '-'),
+                    k.fechaFinalizacion ? JSONtoHour(k.fechaFinalizacion) : '-'),
                   ),
                   ),
                   h(Grid.Column,{},
@@ -383,8 +393,8 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                     h(Table.Cell,{collapsing: true},k.name),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada ? revision.dañada : '-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.faltante ? revision.faltante : '-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.damaged ? revision.damaged : '-'}`),
+                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.missing ? revision.missing : '-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inExcess ? revision.inExcess : '-'}`),
                     revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
                     revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
