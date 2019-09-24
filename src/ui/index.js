@@ -98,7 +98,6 @@ uiGallery = MkUiComponent (function uiGallery(my){
   }
 
   my.render = function(){
-    console.log(listaArchivos)
     return (
       h(Grid,{ stackable: true,divided: true,},
         h(Grid.Row,{},
@@ -228,8 +227,6 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
 
 //parte izquierda del grid muestra el estado de la guia
 uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
-  console.log("----PROPS-----")
-  console.log(my.props.GuiaDeEmbarque)
 
   //A: muestro modal si el pallet esta daniado sino muestro tabla
   function mostrarModal (nombreEvento,archivos){
@@ -258,8 +255,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       }
       guia = my.state.GuiaDeEmbarque;
     }
-    console.log("-----GUIA-----")
-    console.log(guia)
+
   return (
     h('div', {id:'app'},
     my.state.mostrarModal ?
@@ -352,7 +348,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 6;
   if(my.props.evento == INSPECTION3) columnas = 8;
-  console.log(my.props.evento)
+
   function tableRowClick (k) {
     revision=k.revisiones; 
     for (let index = 0; index < revision.length; index++) {
@@ -490,7 +486,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     //tengo un array de json que tiene la informacion de las guias
     for (let index = 0; index < listaGuias.length; index++) {
         if( listaGuias[index].id == guiaId){
-          console.log(listaGuias[index]) 
           return listaGuias[index]
         }
     }
