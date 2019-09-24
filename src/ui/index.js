@@ -8,7 +8,7 @@ rgbColors = {
   azulClaro: 'rgb(105,178,226)',
 }
 //INSPECTION NAMES
-PALLETINSPECTION = "Inspection pallet";
+PALLETINSPECTION = "pallet inspection";
 INSPECTION1 = "Inspection 1";
 INSPECTION2 = "Inspection 2";
 INSPECTION3 = "Inspection 3";
@@ -364,7 +364,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                 revision.nombre == my.props.evento ?
                   ( 
                     h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
-                    h(Table.Cell,{collapsing: true},k.itemName),
+                    h(Table.Cell,{collapsing: true},k.name),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
                     h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.dañada ? revision.dañada : '-'}`),
