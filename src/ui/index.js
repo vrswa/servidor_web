@@ -224,6 +224,16 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
 uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   console.log("----PROPS-----")
   console.log(my.props.GuiaDeEmbarque)
+
+  //A: muestro modal si el pallet esta daniado sino muestro tabla
+  function mostrarModal (nombreEvento,archivos){
+    if (nombreEvento == PALLETINSPECTION){
+      listaArchivos = archivos;
+      my.setState({mostrarModal: true})
+    }else{
+      my.props.seleccionarEvento(nombreEvento,true)
+    }
+  }
   my.render= function (props, state) {
     if (my.props.GuiaDeEmbarque ){
       my.state = {
@@ -236,6 +246,11 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     console.log(guia)
   return (
     h('div', {id:'app'},
+    my.state.mostrarModal ?
+        h(uiModal,{},'sadsadsadasdsa')
+        :
+        null
+      ,
     my.state.GuiaDeEmbarque ? 
       h('div',{},
       /*********************************************************/
@@ -300,7 +315,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                   ),
                   h(Grid.Column,{},
                     //otra columna
-                    h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento(k.nombre,true)},h('b',{},'More info'))
+                    h(Button,{floated:'right',onClick: () => mostrarModal(k.nombre,k.archivos)},h('b',{},'More info'))
                   )
                 )
               )
