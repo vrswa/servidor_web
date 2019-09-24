@@ -179,7 +179,10 @@ uiMenu= MkUiComponent(function uiMenu(my) {
             
           ),
           h(Menu.Item,{},
-             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': rgbColors.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
+            //onClick="window.location.reload()
+            h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': rgbColors.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
+            h(Button, {onClick: () =>window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},"Refresh" ),
+            
           )
         ),
       )
