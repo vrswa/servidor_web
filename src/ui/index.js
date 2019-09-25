@@ -1,17 +1,30 @@
-SERVERIP = 'http://localhost:8888';
-//new date(JSONDATA) = DATE OBJECT
-CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
-CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
-//colores rgb de la empresa BLK
-rgbColors = {
-  azulOscuro: 'rgb(56,87,162)',
-  azulClaro: 'rgb(105,178,226)',
-}
+
+
+/***************************************************************************
+ *                        VARIABLES GLOBALES
+ **************************************************************************/
 //INSPECTION NAMES
 PALLETINSPECTION = "pallet inspection";
 INSPECTION1 = "Inspection 1";
 INSPECTION2 = "Inspection 2";
 INSPECTION3 = "Inspection 3";
+UNREGISTERED_ITEMS = "Unregistered items";
+var usuarioFormularioIngreso = ''; //el nombre que se ingreso en el formulario de ingreso
+var LISTA_ARCHIVOS = ''; //A: lista de archivos para mostrar en uiGallerry
+var eventoGlobal;        //conserva el evento seleccionado
+
+//colores rgb de la empresa BLK
+rgbColors = {
+  azulOscuro: 'rgb(56,87,162)',
+  azulClaro: 'rgb(105,178,226)',
+}
+
+//server and files cfg
+SERVERIP = 'http://localhost:8888';
+CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
+CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
+
+/************************************************************************** */
 
 var Estilos= "cerulean chubby cosmo cyborg darkly flatly journal lumen paper readable sandstone simplex slate solar spacelab superhero united yeti"
               .split(' ');
@@ -21,14 +34,10 @@ function setTheme(t) {
   st.href='/node_modules/semantic-ui-forest-themes/semantic.'+t+'.min.css';
 }
               
-//VARIABLES PARA COMUNICACION ENTRE componentes
-var usuarioFormularioIngreso = '';
-var listaArchivos = ''; //A: contiene la lista de archivos que quiero mostrar en el modal
-var eventoGlobal;
 
 //componente que muestra un modal y llama a uiGaleria
 uiModal = MkUiComponent (function uiModal(my){
-  //ESTILOS
+  /*  ESTILOS */
   modal = {
     'position': 'fixed', /* Stay in place */
     'z-index': '1', /* Sit on top */
@@ -41,7 +50,7 @@ uiModal = MkUiComponent (function uiModal(my){
     'background-color': 'rgb(0,0,0)', /* Fallback color */
     'background-color': 'rgba(0,0,0,0.4)', /* Black w/ opacity */
   }
-  /* Modal Content */
+
   modalContent = {
     'background-color':'#fefefe',
     'margin':' auto',
@@ -50,11 +59,11 @@ uiModal = MkUiComponent (function uiModal(my){
     'width': '90%',
     'min-height': '25%'
   }
-  ///////////////////
+  /******************* */
   function handleClick () {
     my.setState({visible: false})
   }
-  my.state = {
+  my.state = { //quiero que se muestre visible apenas aparezca
     visible: true
   }
   
@@ -77,7 +86,7 @@ uiModal = MkUiComponent (function uiModal(my){
             h(Icon,{name: 'film'}),
             h(Header.Content,{},'Medias for this item')
           ),
-          h(uiGallery,{})
+          h(uiGallery,{}) //A: dentro del modal muestro uiGallery
         )
       )
       : null
@@ -85,7 +94,7 @@ uiModal = MkUiComponent (function uiModal(my){
   }
 });
 
-//componente que muestra los archivos del array listaArchivos
+//componente que muestra los archivos del array LISTA_ARCHIVOS
 uiGallery = MkUiComponent (function uiGallery(my){
   url = `${SERVERIP}/${CfgFileUrl}`;
   videoImagePlaceHolder = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
@@ -102,7 +111,7 @@ uiGallery = MkUiComponent (function uiGallery(my){
       h(Grid,{ stackable: true,divided: true,},
         h(Grid.Row,{},
           h(Grid.Column,{width: '4', style:{}},
-            listaArchivos.map( fileName => (
+            LISTA_ARCHIVOS.map( fileName => (
               fileName.substring(fileName.length-3) == 'mp4'
               ?h(Image,{onClick:()=> createLink(fileName),rounded: true,size: 'tiny',centered: true, src: videoImagePlaceHolder,style:{'margin-top': '5%','cursor': 'pointer'}})
               :h(Image,{onClick:()=> createLink(fileName), rounded: true,size: 'small',centered: true, bordered: true, src: `${url}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})             
@@ -178,8 +187,7 @@ uiMenu= MkUiComponent(function uiMenu(my) {
             
           ),
           h(Menu.Item,{},
-            //onClick="window.location.reload()
-            //refresh
+            
             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': rgbColors.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
             h(Button, {icon: true,labelPosition:'left',onClick: () =>window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},
               h(Icon,{name:'refresh'}),
@@ -197,7 +205,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
   const options = props.manifiesto.map( guia => 
       { return {
         key: guia.id ? guia.id : 'idNotFound',
-        text:  guia.id ? guia.id : 'idNotFound',
+        text:  guia.id ? guia.name : 'idNotFound',
         value:  guia.id ? guia.id : 'idNotFound'
       }
     }
@@ -236,14 +244,16 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
 
   //A: muestro modal si el pallet esta daniado sino muestro tabla
   function mostrarModal (nombreEvento,archivos){
-    if (nombreEvento == PALLETINSPECTION){
-      listaArchivos = archivos;
+    console.log(nombreEvento)
+    if (nombreEvento == PALLETINSPECTION || nombreEvento == UNREGISTERED_ITEMS){
+      LISTA_ARCHIVOS = archivos;
       my.setState({mostrarModal: true})
     }else{
       my.props.seleccionarEvento(nombreEvento,true)
     }
   }
 
+  //recibe una fecha en formato json y devuelve un string con la fecha dia/mes/anio
   function JSONtoDATE(JSONdate){
     
       let fecha = new Date(JSONdate);
@@ -258,6 +268,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     return `${date.getHours()}:${date.getMinutes()}`;
   }
 
+  //muestra mensaje por consola indicando el error y una solucion
   function mostrarh1(){
     console.log({
       error: 'all air way field muest have a inspeccion field, and must be an ARRAY',
@@ -384,7 +395,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
     for (let index = 0; index < revision.length; index++) {
       if ((revision[index].nombre == my.props.evento) && my.props.evento != "Pre Inspection"){  //pre inspection no puede tener archivos
         if (revision[index].archivos && revision[index].archivos.length > 0){
-          listaArchivos = revision[index].archivos; //A: guardo en la variable la lista de archivos que quiero mostrar
+          LISTA_ARCHIVOS = revision[index].archivos; //A: guardo en la variable la lista de archivos que quiero mostrar
           my.setState({mostrarModal: true});        //A: y muestro el modal
         }
       }    
@@ -486,7 +497,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
 
   function seleccionarGuiaDeManifiesto(manifiesto,guia){
     for (let index = 0; index < manifiesto.length; index++) {
-      console.log(manifiesto[index].id)
       if (manifiesto[index].id == guia) return manifiesto[index]
       
     }
@@ -505,11 +515,10 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
       try {
         var json = await res.json();
         guiaSeleccionada = seleccionarGuiaDeManifiesto(json,"MAN-000001");
-        console.log(guiaSeleccionada)
         my.setState({manifiesto: guiaSeleccionada});
         //my.setState({manifiesto: json[0]});
       } catch (error) {
-        console.log({
+        console.log(error ={
           JSONError: true,
           error: error
         })
@@ -568,7 +577,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           null
           ,
           my.state.manifiesto ? //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
-            h(uiSelects,{manifiesto: my.state.manifiesto.guides, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.id},)
+            h(uiSelects,{manifiesto: my.state.manifiesto.guides, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.name},)
             :
             my.state.JsonError ?
               null
