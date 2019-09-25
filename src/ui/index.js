@@ -460,13 +460,22 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   async function obtenerManifiesto (){   
     //var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
     var res = await fetch(`${SERVERIP}/${CfgManifestUrl}`);
-    try {
-      var json = await res.json();
-      my.setState({manifiesto: json[0]}); 
-    } catch (error) {
-      my.setState({JsonError: true})
-    }
-    
+    if(res.status == 404){
+      json = await res.json();
+      console.log(json);
+      my.setState({JsonError: true});
+    }else{
+      try {
+        var json = await res.json();
+        my.setState({manifiesto: json[0]});
+      } catch (error) {
+        console.log({
+          JSONError: true,
+          error: error
+        })
+        my.setState({JsonError: true});
+      }      
+    }    
   }
 
   //cambio el fondo
@@ -514,7 +523,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
       h(Container, {},
         h(uiMenu,{}),
           my.state.JsonError ? 
-          h(Segment,{},'JSON FORMAT ERROR, please fix the JSON and reload')
+          h(Segment,{},'ERROR, press f12 to see more details in console')
           :
           null
           ,
