@@ -422,8 +422,9 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                       h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.damaged ? revision.damaged : '-'}`),
                       h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.missing ? revision.missing : '-'}`),
                       h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inExcess ? revision.inExcess : '-'}`),
-                      revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : h(Table.Cell,{collapsing: true,textAlign:'right'}, '-'),
-                      revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : h(Table.Cell,{collapsing: true,textAlign:'right'}, '-'),
+                      //A: si existe el pasillo o estante lo muestro, sino existe y evento != inspection2 no muestro nada(no me genera columna) , sino muestro '-'
+                      revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : (my.props.evento == INSPECTION2 ? h(Table.Cell,{collapsing: true,textAlign:'right'}, '-') : null),
+                      revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : (my.props.evento == INSPECTION2 ? h(Table.Cell,{collapsing: true,textAlign:'right'}, '-') : null),
 
                       //reviso que exista el campo , y si existe que el array sea mayor que cero
                       revision.archivos ?
