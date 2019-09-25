@@ -556,7 +556,12 @@ app.get('/api/blk/protocols/:protocolId/missions/:missionId/:file',(req,res) => 
 		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(_path.resolve(ruta));
 	}else{
-		res.send("not file or directory");
+		res.status(404).json({
+			error: "file not found in server",
+			endpoint: `/api/blk/protocols/${protocoloId}/missions/${missionId}/${file}`,
+			requestedFile: file,
+			fileNotFoundIn: `${process.cwd()}/blk/protocols/${protocoloId}/missions/${missionId}/${file}` 
+		});
 	}
 	
 })
