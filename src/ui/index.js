@@ -245,8 +245,12 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 
   function JSONtoDATE(JSONdate){
-    let fecha = new Date(JSONdate);
-    return  `${fecha.getDate()}/${fecha.getMonth()}/${fecha.getFullYear()}`;
+    
+      let fecha = new Date(JSONdate);
+      if (isNaN(fecha))
+        return 'error en fecha'
+      return  `${fecha.getDate()}/${fecha.getMonth()}/${fecha.getFullYear()}`;
+
   }
 
   function JSONtoHour(JSONdate){
@@ -379,7 +383,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
     revision=k.revisiones; //A: recibo todo el array de revisiones 
     for (let index = 0; index < revision.length; index++) {
       if ((revision[index].nombre == my.props.evento) && my.props.evento != "Pre Inspection"){  //pre inspection no puede tener archivos
-        if (revision[index].archivos.length > 0){
+        if (revision[index].archivos && revision[index].archivos.length > 0){
           listaArchivos = revision[index].archivos; //A: guardo en la variable la lista de archivos que quiero mostrar
           my.setState({mostrarModal: true});        //A: y muestro el modal
         }
