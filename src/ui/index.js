@@ -196,14 +196,20 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 uiSelects = MkUiComponent(function uiSelects(my,props) {
   const options = props.manifiesto.map( guia => 
       { return {
-        key: guia.id,
-        text:  guia.id,
-        value:  guia.id
+        key: guia.id ? guia.id : 'idNotFound',
+        text:  guia.id ? guia.id : 'idNotFound',
+        value:  guia.id ? guia.id : 'idNotFound'
       }
     }
   )
   //se ejecuta cuando se seleccion un item del select
   function seleccion(e,{value}){
+    if (value =='idNotFound'){
+      console.log({
+        error: 'all guides have a field call "id" with unique value ',
+        example: 'guide1 -> "id":"AWB-000001-0001"'
+      })
+    }
     my.setState({...my.state,value: value});
     props.cambiarGuiaSeleccionada(value,true);
   }
@@ -214,7 +220,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
           h(Form,{},
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
-                h(Label,{},`Manifest: ${props.minifiestoID}`),
+                h(Label,{},`Manifest: ${props.minifiestoID ? props.minifiestoID : "id not found"}`),
                 h(Select,{ options:options, placeholder:'Air Waybills', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
               )
             )
@@ -247,6 +253,26 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
     let date = new Date(JSONdate);
     return `${date.getHours()}:${date.getMinutes()}`;
   }
+
+  function mostrarh1(){
+    console.log({
+      error: 'all air way field muest have a inspeccion field, and must be an ARRAY',
+      inspeccionExample: [{
+                "nombre": "Inspection 1",
+                "lugar": "CDMX Airport",
+                "fechaInicio": "2012-04-23T18:25:43.511Z",
+                "fechaFinalizacion" : "2012-04-23T18:27:56.123Z"
+              },
+              {
+                "nombre": "Inspection 2",
+                "estado": "completado/incompleto",
+                "fechaInicio": "2012-04-23T18:25:43.511Z",
+                "fechaFinalizacion" : "2012-04-23T18:27:56.123Z",
+                "lugar": "CDMX Airport"  
+              }]
+    })
+    return h('h1',{style: {color: 'white'}},'error, press f12 to more details');
+  }
   my.render= function (props, state) {
     if (my.props.GuiaDeEmbarque ){
       my.state = {
@@ -255,7 +281,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
       }
       guia = my.state.GuiaDeEmbarque;
     }
-
+  
   return (
     h('div', {id:'app'},
     my.state.mostrarModal ?
@@ -263,7 +289,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
         :
         null
       ,
-    my.state.GuiaDeEmbarque ? 
+    my.state.GuiaDeEmbarque && my.state.GuiaDeEmbarque.inspeccion && Array.isArray (my.state.GuiaDeEmbarque.inspeccion)? 
       h('div',{},
       /*********************************************************/
       //  Pre inspection Card
@@ -337,7 +363,7 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
           )
         )
         :
-        h('h1',{},'Select a Air Waybill')
+        mostrarh1()
       )
     )
   }
@@ -350,9 +376,9 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   if(my.props.evento == INSPECTION3) columnas = 8;
 
   function tableRowClick (k) {
-    revision=k.revisiones; 
+    revision=k.revisiones; //A: recibo todo el array de revisiones 
     for (let index = 0; index < revision.length; index++) {
-      if (revision[index].nombre == my.props.evento){
+      if ((revision[index].nombre == my.props.evento) && my.props.evento != "Pre Inspection"){  //pre inspection no puede tener archivos
         if (revision[index].archivos.length > 0){
           listaArchivos = revision[index].archivos; //A: guardo en la variable la lista de archivos que quiero mostrar
           my.setState({mostrarModal: true});        //A: y muestro el modal
@@ -390,34 +416,30 @@ uiTabla= MkUiComponent(function uiTabla(my) {
                 revision.nombre == my.props.evento ?
                   ( 
                     h(Table.Row,{onClick: ()=> { tableRowClick (k)},style:{cursor: 'pointer'}},
-                    h(Table.Cell,{collapsing: true},k.name),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.damaged ? revision.damaged : '-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.missing ? revision.missing : '-'}`),
-                    h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inExcess ? revision.inExcess : '-'}`),
-                    revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
-                    revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
+                      h(Table.Cell,{collapsing: true},k.name),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.packages ? revision.packages :'-'}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inspected ? revision.inspected : '-'}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.damaged ? revision.damaged : '-'}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.missing ? revision.missing : '-'}`),
+                      h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.inExcess ? revision.inExcess : '-'}`),
+                      revision.pasillo ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.pasillo}`) : null,
+                      revision.estante ? h(Table.Cell,{collapsing: true,textAlign:'right'}, `${revision.estante}`) : null,
 
-                    //reviso que exista el campo , y si existe que el array sea mayor que cero
-                    revision.archivos ?
-                      (
-                        revision.archivos.length > 0 ?
-                          h(Table.Cell,{collapsing: true,textAlign:'center'},
-                            h(Icon,{color:'green', name:'checkmark', size:'large'})
-                          )
-                        :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
-                      ) 
-                      : h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
+                      //reviso que exista el campo , y si existe que el array sea mayor que cero
+                      revision.archivos ?
+                        (
+                          revision.archivos.length > 0 ?
+                            h(Table.Cell,{collapsing: true,textAlign:'center'},
+                              h(Icon,{color:'green', name:'checkmark', size:'large'})
+                            )
+                          :  h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
+                        ) 
+                        : h(Table.Cell,{collapsing: true,textAlign:'center'}, `-`)
                     )//parentesis table row
                   )
                   : 
                   null  
               ),
-              h(Table.Cell,{collapsing: true,textAlign:'right'},
-                h(Icon,{name:'folder'}),
-                'hola'
-              )
             )  
           )
         ),
