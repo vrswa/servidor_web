@@ -483,6 +483,16 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
 
 //llama a los demas componentes que muestran el portal de guias
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { 
+
+  function seleccionarGuiaDeManifiesto(manifiesto,guia){
+    for (let index = 0; index < manifiesto.length; index++) {
+      console.log(manifiesto[index].id)
+      if (manifiesto[index].id == guia) return manifiesto[index]
+      
+    }
+    return -1;
+  }
+
   //U: funcion que obtiene los nombre de los dataset disponibles
   async function obtenerManifiesto (){   
     //var res1 = await fetch(`${SERVERIP}/api/blk/dataset/`)  //actualizar dataset de github
@@ -494,7 +504,10 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }else{
       try {
         var json = await res.json();
-        my.setState({manifiesto: json[0]});
+        guiaSeleccionada = seleccionarGuiaDeManifiesto(json,"MAN-000001");
+        console.log(guiaSeleccionada)
+        my.setState({manifiesto: guiaSeleccionada});
+        //my.setState({manifiesto: json[0]});
       } catch (error) {
         console.log({
           JSONError: true,
@@ -554,7 +567,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           :
           null
           ,
-          my.state.manifiesto ? 
+          my.state.manifiesto ? //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
             h(uiSelects,{manifiesto: my.state.manifiesto.guides, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.id},)
             :
             my.state.JsonError ?
