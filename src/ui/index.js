@@ -3,6 +3,9 @@
 /***************************************************************************
  *                        VARIABLES GLOBALES
  **************************************************************************/
+var MANIFIESTOS;
+var MANIFIESTO_SELECCIONADO;
+var listaGuiaDeEmbarque;
 //INSPECTION NAMES
 PALLETINSPECTION = "pallet inspection";
 INSPECTION1 = "Inspection 1";
@@ -202,14 +205,41 @@ uiMenu= MkUiComponent(function uiMenu(my) {
 
 //selects para elegir manifiesto y guia de embarque
 uiSelects = MkUiComponent(function uiSelects(my,props) {
-  const options = props.manifiesto.map( guia => 
-      { return {
-        key: guia.id ? guia.id : 'idNotFound',
-        text:  guia.id ? guia.name : 'idNotFound',
-        value:  guia.id ? guia.id : 'idNotFound'
+ 
+  const options = MANIFIESTOS.map( manifiesto => 
+    { return {
+        key: manifiesto.id ? manifiesto.id : 'idNotFound',
+        text:  manifiesto.id ? manifiesto.name : 'idNotFound',
+        value:  manifiesto.id ? manifiesto.id : 'idNotFound'
       }
     }
   )
+
+  //se ejecuta cuando se selecciona un item de los manifiestos
+  function seleccionManifiesto(e,{value}){
+    if (value =='idNotFound'){
+      console.log({
+        error: 'all guides have a field call "id" with unique value ',
+        example: 'guide1 -> "id":"AWB-000001-0001"'
+      })
+    }
+    for (let index = 0; index < MANIFIESTOS.length; index++) {
+      if ( MANIFIESTOS[index].id == value){
+        MANIFIESTO_SELECCIONADO = MANIFIESTOS[index];
+        //CONSTRUYO LOS OPTION PARA EL SELECT PARA LAS GUIAS DE EMBARQUE
+        listaGuiaDeEmbarque = MANIFIESTOS[index].guides.map ( guia =>{
+          return{
+          key: guia.id ? guia.id : 'idNotFound',
+          text:  guia.id ? guia.name : 'idNotFound',
+          value:  guia.id ? guia.id : 'idNotFound'
+          }
+        })
+        my.setState({manifiestoSeleccionado: true});
+      }
+    }
+    //props.cambiarGuiaSeleccionada(value,true);
+  }
+
   //se ejecuta cuando se seleccion un item del select
   function seleccion(e,{value}){
     if (value =='idNotFound'){
@@ -221,6 +251,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
     my.setState({...my.state,value: value});
     props.cambiarGuiaSeleccionada(value,true);
   }
+
   my.render= function (props, state) {
     return (
       h('div',{},
@@ -228,9 +259,15 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
           h(Form,{},
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
-                h(Label,{},`Manifest: ${props.minifiestoID ? props.minifiestoID : "id not found"}`),
-                h(Select,{ options:options, placeholder:'Air Waybills', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
-              )
+                h(Label,{},`Manifest:`),
+                h(Select,{ options:options, placeholder:'Manifest', onChange : (e,{value}) => seleccionManifiesto(e,{value}), value: my.state.value}),
+              ),
+              listaGuiaDeEmbarque || my.props.guia ? 
+                h(Form.Field, {inline: true},
+                  h(Label,{},`Air waybill:`),
+                  h(Select,{ options: listaGuiaDeEmbarque, placeholder:'Air waybill', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
+                )
+              :console.log("chau")
             )
           )
         ),
@@ -514,7 +551,10 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }else{
       try {
         var json = await res.json();
+        console.log(json)
+        MANIFIESTOS = json;
         guiaSeleccionada = seleccionarGuiaDeManifiesto(json,"MAN-000001");
+        my.setState({cargo : true})
         my.setState({manifiesto: guiaSeleccionada});
         //my.setState({manifiesto: json[0]});
       } catch (error) {
@@ -540,7 +580,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
 
   //buscar una guia con su ID dentro de un manifiesto
   function buscarGuia( guiaId){
-    listaGuias = my.state.manifiesto.guides;
+    listaGuias = MANIFIESTO_SELECCIONADO.guides;
     //tengo un array de json que tiene la informacion de las guias
     for (let index = 0; index < listaGuias.length; index++) {
         if( listaGuias[index].id == guiaId){
@@ -551,11 +591,13 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
   
   //U: con el id , se cambia la guia en el state
   function cambiarGuiaSeleccionada (guiaId,limpiar){
+
     if(limpiar){
       my.setState({archivo: null, revisiones: null}),
       my.setState({evento: null})     
     }
     var guiaSeleccionada = buscarGuia(guiaId);
+    console.log(guiaSeleccionada)
     my.setState({guiaSeleccionada: guiaSeleccionada})
   }
 
@@ -576,8 +618,8 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
           :
           null
           ,
-          my.state.manifiesto ? //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
-            h(uiSelects,{manifiesto: my.state.manifiesto.guides, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.name},)
+          my.state.cargo ? //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
+            h(uiSelects,{guia: my.state.guiaSeleccionada, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.name},)
             :
             my.state.JsonError ?
               null
