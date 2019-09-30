@@ -5,6 +5,7 @@
  **************************************************************************/
 var MANIFIESTOS;
 var MANIFIESTO_SELECCIONADO;
+
 var listaGuiaDeEmbarque;
 //INSPECTION NAMES
 PALLETINSPECTION = "pallet inspection";
@@ -26,6 +27,10 @@ rgbColors = {
 SERVERIP = 'http://localhost:8888';
 CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
 CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
+
+//selects placeholder
+var manifiestoID;
+var guiaID
 
 /************************************************************************** */
 
@@ -209,14 +214,14 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
   const options = MANIFIESTOS.map( manifiesto => 
     { return {
         key: manifiesto.id ? manifiesto.id : 'idNotFound',
-        text:  manifiesto.id ? manifiesto.name : 'idNotFound',
+        text:  manifiesto.id ? manifiesto.id : 'idNotFound',
         value:  manifiesto.id ? manifiesto.id : 'idNotFound'
       }
     }
   )
 
   //se ejecuta cuando se selecciona un item de los manifiestos
-  function seleccionManifiesto(e,{value}){
+  function seleccionManifiesto(e,{value,text}){
     if (value =='idNotFound'){
       console.log({
         error: 'all guides have a field call "id" with unique value ',
@@ -230,10 +235,11 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
         listaGuiaDeEmbarque = MANIFIESTOS[index].guides.map ( guia =>{
           return{
           key: guia.id ? guia.id : 'idNotFound',
-          text:  guia.id ? guia.name : 'idNotFound',
+          text:  guia.id ? guia.id : 'idNotFound',
           value:  guia.id ? guia.id : 'idNotFound'
           }
         })
+        manifiestoID = value; //global variable for select placeholder
         my.setState({manifiestoSeleccionado: true});
       }
     }
@@ -248,6 +254,7 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
         example: 'guide1 -> "id":"AWB-000001-0001"'
       })
     }
+    guiaID = value; //global variable for select placeholder
     my.setState({...my.state,value: value});
     props.cambiarGuiaSeleccionada(value,true);
   }
@@ -260,12 +267,12 @@ uiSelects = MkUiComponent(function uiSelects(my,props) {
             h(Form.Group,{}, 
               h(Form.Field, {inline: true},
                 h(Label,{},`Manifest:`),
-                h(Select,{ options:options, placeholder:'Manifest', onChange : (e,{value}) => seleccionManifiesto(e,{value}), value: my.state.value}),
+                h(Select,{ options:options, placeholder: manifiestoID || 'manifest' , onChange : (e,{value}) => seleccionManifiesto(e,{value})}),
               ),
               listaGuiaDeEmbarque || my.props.guia ? 
                 h(Form.Field, {inline: true},
                   h(Label,{},`Air waybill:`),
-                  h(Select,{ options: listaGuiaDeEmbarque, placeholder:'Air waybill', onChange : (e,{value}) => seleccion(e,{value}), value: my.state.value}),
+                  h(Select,{ options: listaGuiaDeEmbarque, placeholder: guiaID  || 'Air waybill', onChange : (e,{value}) => seleccion(e,{value})}),
                 )
               :console.log("chau")
             )
