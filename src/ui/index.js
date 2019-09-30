@@ -3,7 +3,7 @@
 /***************************************************************************
  *                        VARIABLES GLOBALES
  **************************************************************************/
-var MANIFIESTOS;
+var MANIFIESTOS; //A:contiene toda la informacion que vino en el json
 var MANIFIESTO_SELECCIONADO;
 
 var listaGuiaDeEmbarque;
@@ -175,19 +175,11 @@ uiLogin = MkUiComponent (function uiLogin(my){
 
 //menu principal de la parte superior 
 uiMenu= MkUiComponent(function uiMenu(my) {
-  handleItemClick = (e, { name }) => {my.setState({ activeItem: name });} 
-  my.state= {
-    activeItem: 'itemA'
-  }
-
   my.render= function (props, state) {
     return (
       h(Menu,{item:true,stackable:true,style:{backgroundColor: 'rgb(255, 255, 255)'}},
-      //width: 180px;height:60px
         h('img',{src: './imagenes/logoBlanco.png',style:{width:"180px",height:'60px',"margin-top":"3px"}}),
-        h(Menu.Item,{},
-          //h('img',{src: './imagenes/logoBlanco.png',width:'50px!important'})
-        ),
+        
         h(Menu.Menu,{position:'right'},
           h(Menu.Item,{},
             h(Icon,{name:'user',size:'big',style:{'color': rgbColors.azulOscuro}}),
