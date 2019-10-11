@@ -82,7 +82,6 @@
     "linkstate": "^1.1.1",
     "mocha": "^3.1.0",
     "open": "^6.4.0",
-    "pkg": "^4.4.0",
     "preact": "^8.4.2",
     "preact-compat": "^3.18.5",
     "preact-router": "^2.6.1",
