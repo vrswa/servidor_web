@@ -173,8 +173,8 @@ uiLogin = MkUiComponent (function uiLogin(my){
   }
 });
 
-//menu principal de la parte superior 
-uiMenu= MkUiComponent(function uiMenu(my) {
+
+uiMenuTopbar= MkUiComponent(function uiMenuTopbar(my) {//U: menu principal de la parte superior 
   my.render= function (props, state) {
     return (
       h(Menu,{item:true,stackable:true,style:{backgroundColor: 'rgb(255, 255, 255)'}},
@@ -367,7 +367,19 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
             ),
             h(Grid.Column,{},
               //otra columna
-              h(Button,{floated:'right',onClick: () => my.props.seleccionarEvento('Pre Inspection',true)},h('b',{},'More info'))
+              h(Button,{
+									floated:'right',
+									onClick: () => {
+										my.props.seleccionarEvento('Pre Inspection',true);
+										console.log('CLICK More Info seleccionarEvento');
+										setTimeout(() => {
+											var el= document.getElementById("uiTablaDetalle")	
+											el.scrollIntoView(); //A: movi para que se vea la tabla detalle
+										}, 500);
+									}
+								},
+								h('b',{},'More info')
+							)
             )
           )
         )
@@ -404,7 +416,18 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
                   ),
                   h(Grid.Column,{},
                     //otra columna
-                    h(Button,{floated:'right',onClick: () => mostrarModal(k.nombre,k.archivos)},h('b',{},'More info'))
+                    h(Button,
+											{ floated:'right', 
+												onClick: () => {
+													mostrarModal(k.nombre,k.archivos)
+													console.log('CLICK More Info motrarModal');
+													setTimeout(() => {
+														var el= document.getElementById("uiTablaDetalle")	
+														el.scrollIntoView(); //A: movi para que se vea la tabla detalle
+													}, 500);
+												}
+											},
+											h('b',{},'More info'))
                   )
                 )
               )
@@ -420,8 +443,8 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) {
   }
 });
 
-//A: tabla que muestra el estado de los items
-uiTabla= MkUiComponent(function uiTabla(my) { 
+
+uiTablaDetalle= MkUiComponent(function uiTablaDetalle(my) { //U: tabla que muestra el estado de los items
   //U: props.guia una guia de embarque , props.evento (confronta, confronta2, previa) 
   var columnas = 6;
   if(my.props.evento == INSPECTION3) columnas = 8;
@@ -440,7 +463,7 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   my.render= function (props, state) {
 
     return (
-      h('div',{style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
+      h('div',{id: 'uiTablaDetalle', style:{'overflow': 'auto', 'overflow-y': 'hidden'}},
         h(Table,{celled: true, striped: true,unstackable: true,selectable: true},
           h(Table.Header,{},
             h(Table.Row,{},
@@ -504,12 +527,10 @@ uiTabla= MkUiComponent(function uiTabla(my) {
   }
 });
 
-//grid para dividir la pantalla en dos 
-uiGridField = MkUiComponent(function uiClientPortal(my,props) {
-  //GuiaDeEmbarque: my.state.guiaSeleccionada,cambiarArchivo: cambiarArchivo, seleccionarEvento: seleccionarEvento, evento: my.state.evento
+
+uiGridField = MkUiComponent(function uiClientPortal(my,props) { //U: grid para dividir la pantalla en dos: inspecciones y detalle 
   my.render= function (props, state) {  
     return (
-      //h(Grid,{ stackable: true,columns: 'two', divided: true, style: {'margin-top': '3%'}},
       h(Grid,{ stackable: true,divided: true, style: {'margin-top': '3%'}},
         h(Grid.Row,{},
           h(Grid.Column,{width: '7'},
@@ -517,7 +538,7 @@ uiGridField = MkUiComponent(function uiClientPortal(my,props) {
           ),
           h(Grid.Column,{width: '9'},
             my.props.evento ?  
-              h(uiTabla,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
+              h(uiTablaDetalle,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
               : 
               null
               //h(Header,{style:{color: 'rgb(255,255,255)'},textAlign:'center',size: 'huge'},'Select a Event')
@@ -589,8 +610,8 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }
   }
   
-  //U: con el id , se cambia la guia en el state
-  function cambiarGuiaSeleccionada (guiaId,limpiar){
+
+  function cambiarGuiaSeleccionada (guiaId,limpiar){  //U: con el id , se cambia la guia en el state
 
     if(limpiar){
       my.setState({archivo: null, revisiones: null}),
@@ -609,15 +630,17 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     my.setState({evento: evento})
   }
 
-  my.render= function (props, state) {
+  my.render= function (props, state) { //U: aca se dibuja toda la pagina segun el estado
     return (
       h(Container, {},
-        h(uiMenu,{}),
+        h(uiMenuTopbar,{}),
+
           my.state.JsonError ? 
           h(Segment,{},'ERROR, press f12 to see more details in console')
           :
           null
           ,
+
           my.state.cargo ? //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
             h(uiSelects,{guia: my.state.guiaSeleccionada, cambiarGuiaSeleccionada : cambiarGuiaSeleccionada,minifiestoID: my.state.manifiesto.name},)
             :
@@ -626,8 +649,9 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
               : 
               h(Segment,{},'JSON FORMAT ERROR, please fix the JSON and reload')
           ,
+
           my.state.guiaSeleccionada ?
-          h('div',{},
+          h('div',{id: "guiaSeleccionada"}, //A: todo el detalle de la guia, cada inspeccion y si elijo una la tabla
             h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaSeleccionada.id}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
             h(uiGridField,{GuiaDeEmbarque: my.state.guiaSeleccionada, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
           )
