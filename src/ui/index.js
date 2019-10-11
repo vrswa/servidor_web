@@ -514,6 +514,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) {
     }else{
       try {
         var json = await res.json();
+        //"id":"AWB-000004-0001",
         guiaSeleccionada = seleccionarGuiaDeManifiesto(json,"MAN-000001");
         my.setState({manifiesto: guiaSeleccionada});
         //my.setState({manifiesto: json[0]});
