@@ -156,19 +156,7 @@ uiSelectManifestAndGuide = MkUiComponent(function uiSelectManifestAndGuide(my,pr
   function onManifestSelected(e,{value}) { //U: cuando cambia el dropdown de manifiestos
 		ManifiestoElegido = Manifiestos[value];
 		console.log("ManifestSelected",value, ManifiestoElegido);
-		if (ManifiestoElegido) {
-			manifiestoID = ManifiestoElegido.id; //A: actualizo placeholder select
-			listaGuiaDeEmbarque = ManifiestoElegido.guides.map( (guia, guiaIdx) =>{
-				return{
-					key: guia.id || 'idNotFound',
-					text:  guia.id || 'idNotFound',
-					value:  guiaIdx,
-				}
-			});
-			//A: construi LOS OPTION PARA EL SELECT PARA LAS GUIAS DE EMBARQUE
-
-			my.setState({manifiestoSeleccionado: true});
-		}
+		my.setState({}); //A: trigger update
   }
 
   function onGuideSelected(e,{value}) { //U: cuando cambia el dropdown de guias
@@ -182,10 +170,21 @@ uiSelectManifestAndGuide = MkUiComponent(function uiSelectManifestAndGuide(my,pr
 
   my.render= function (props, state) {
 		var manifestOpts = Manifiestos.map( (manifiesto, idx) => {return {
-					key: manifiesto.id || 'idNotFound',
 					text: manifiesto.id || 'idNotFound',
 					value: idx,
 		}	});
+
+		var awbOpts; 
+		if (ManifiestoElegido) {
+			manifiestoID = ManifiestoElegido.id; //A: actualizo placeholder select
+			awbOpts = ManifiestoElegido.guides.map( (guia, guiaIdx) =>{
+				return{
+					text:  guia.id || 'AWB@' + guiaIdx+ ' has no id',
+					value:  guiaIdx,
+				}
+			});
+		}
+
 
     return (
       h('div',{},
@@ -196,10 +195,10 @@ uiSelectManifestAndGuide = MkUiComponent(function uiSelectManifestAndGuide(my,pr
                 h(Label,{},`Manifest:`),
                 h(Select,{ options: manifestOpts, placeholder: manifiestoID || 'not selected' , onChange: onManifestSelected}),
               ),
-              listaGuiaDeEmbarque || my.props.guia  
+              awbOpts || my.props.guia  
                 ? h(Form.Field, {inline: true},
                   h(Label,{},`Air waybill:`),
-                  h(Select,{ options: listaGuiaDeEmbarque, placeholder: guiaID  || 'not selected', onChange : (e,{value}) => onGuideSelected(e,{value})}),
+                  h(Select,{ options: awbOpts, placeholder: guiaID  || 'not selected', onChange : (e,{value}) => onGuideSelected(e,{value})}),
                 )
               	: null
             )
