@@ -9,10 +9,12 @@
 //TODO: algun tipo de token, no pisar archivos a lo bestia ...
 
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
-CfgDbBaseDir= 'DATA'; //A: los datos se guardar aqui
-CfgDbMissionResultsBaseDir= CfgDbBaseDir + '/missions';
+CfgDbBaseDir= 'DATA'; //U: los datos se guardar aqui
+CfgDbMissionResultsBaseDir= CfgDbBaseDir + '/missions'; //U: resultados de misiones que recibimos
 
-CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
+CfgUploadSzMax= 50 * 1024 * 1024; //U: 50MB max file(s) size 
+
+CfgIsSmartWorkArNonce= "LaRealidadSeraAumentadaONoSera"; //U: un secreto compartido con el cliente para identificar el servidor
 
 //----------------------------------------------------------
 //S: dependencias
@@ -158,6 +160,34 @@ function rutaCarpeta(rutaPfx, folderId, secondfolderId, file, wantsCreate) {
 //   console.log(rutaCarpeta( path.join(CfgDbBaseDir, "mantenimientoTurbina", "missions"), "misionNueva", null, true))//A: crear carpeta para mision
 //   console.log(rutaCarpeta( path.join(CfgDbBaseDir, "mantenimientoTurbina", "missions"), "misionFalsa", null, false))//A: no crea carpeta para mision
 
+//U: hash para un string
+// Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
+//VER: https://gist.github.com/GuillermoPena/9233069
+function stringHash(string, algorithm = 'md5') {
+	let shasum = crypto.createHash(algorithm);
+	shasum.update(string)
+	var hash = shasum.digest('hex')
+	return hash;
+}
+
+//U: recibe la ruta de un archivo y devuelve un hash con el md5
+// Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
+//VER: https://gist.github.com/GuillermoPena/9233069
+function fileHash(filename, algorithm = 'md5') {
+	return new Promise((resolve, reject) => {
+		let shasum = crypto.createHash(algorithm);
+		try {
+			let s = fs.ReadStream(filename);
+			s.on('data', function (data) { shasum.update(data) })
+			s.on('end', function () {
+				var hash = shasum.digest('hex')
+				return resolve(hash);
+			});
+		} catch (error) { return reject('calc fail'); }
+	});
+}
+
+
 //U: recibe la ruta de un archivo y devuelve un hash con el md5
 // Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
 //VER: https://gist.github.com/GuillermoPena/9233069
@@ -242,6 +272,20 @@ app.get('/', function(req, res) { res.redirect('/ui/'); });
 //------------------------------------------------------------
 //S: API estandar, todos los proyectos
 
+//U: responder para cuando cliente busca servidor escaneando la red
+//TEST: H=`curl 'http://localhost:8888/api/isSmartWorkAR?nonce=MiSecretoComoCliente1'`; if [ "$H" == "bc86f7dfe95687c6faf5a632b790c458" ] ; then echo "OK" ; fi
+//TEST: H=`curl 'http://localhost:8888/api/isSmartWorkAR?nonce=MiSecretoComoCliente2'`; if [ "$H" == "98b2a107561e8d5cdfd997efdc599268" ] ; then echo "OK" ; fi
+app.get('/api/isSmartWorkAR', (req, res) => {
+	var clientNonce= req.query.nonce || 'thisMayBeASecret'; //A: el cliente manda un texto al azar
+	console.log('Scan isSmartWorkAR nonce: '+clientNonce);
+	var hash= stringHash(clientNonce + '\t' + CfgIsSmartWorkArNonce); 
+	res.status(200).send(hash);
+	//A: devolvemos un hash unico mezclando el nonce del cliente (al azar) Y el compartido
+	//asi el cliente puede validar que el servidor es el que busca hashando lo mismo y comparando
+	//TODO: agregar salt al hash
+})
+
+
 //U: conseguir todos los nombres de missiones de un protocolo especifico
 //curl "http://localhost:8888/api/missions" no existe carpeta missions
 //curl "http://localhost:8888/api/missions/noExisto"  no existe protocolos
@@ -296,8 +340,8 @@ app.post('/api/mission/:missionId', (req, res) => {
 
 	var missionId= req.params.missionId;
 	var ruta= rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, null, true);
-	guardarArchivos(req.files, ruta, "Mission files ", function(vectorHashes){
-		return res.status(200).send({'status': 'ok', 'hashes': vectorHashes}); //A: envio tambien HASH
+	guardarArchivos(req.files, ruta, "Mission files ", function(kvHashes){
+		return res.status(200).send({'status': 'ok', 'hashes': kvHashes}); //A: envio tambien HASH
 	})
 });
 
