@@ -46,12 +46,12 @@ function JSONtoDATE(JSONdate) {  //U: recibe una fecha en formato json y devuelv
 	return  `${fecha.getDate()}/${fecha.getMonth()}/${fecha.getFullYear()}`;
 }
 
-function JSONtoHour(JSONdate){
+function JSONtoHour(JSONdate) {
 	let date = new Date(JSONdate);
 	return `${date.getHours()}:${date.getMinutes()}`;
 }             
 
-async function obtenerManifiesto (){   //U: funcion que obtiene los nombre de los dataset disponibles
+async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de los dataset disponibles
 	ManifiestoError= "Loading manifest"; //DFLT
 	var res = await fetch(`${SERVERIP}/${CfgManifestUrl}`);
 	if(res.status == 404){ ManifiestoError: "No manifests found (404)"; console.error("Manifests", ManifiestoError); }
@@ -242,10 +242,8 @@ uiGallery = MkUiComponent (function uiGallery(my){ //U: muestra los archivos de 
   }
 });
 
-
-uiModal= MkUiComponent (function uiModal(my){ //U: componente que muestra un modal y llama a uiGaleria
-  /*  ESTILOS */
-  modal = {
+uiDetailMedia= MkUiComponent (function uiModal(my){ //U: componente que muestra un modal y llama a uiGaleria
+  var modal= {
     'position': 'fixed', /* Stay in place */
     'z-index': '1', /* Sit on top */
     'padding-top': '50px', /* Location of the box */
@@ -258,7 +256,7 @@ uiModal= MkUiComponent (function uiModal(my){ //U: componente que muestra un mod
     'background-color': 'rgba(0,0,0,0.4)', /* Black w/ opacity */
   }
 
-  modalContent = {
+  var modalContent= {
     'background-color':'#fefefe',
     'margin':' auto',
     'padding': '20px',
@@ -267,19 +265,10 @@ uiModal= MkUiComponent (function uiModal(my){ //U: componente que muestra un mod
     'min-height': '25%'
   }
 
-  function handleClick () {
-    my.setState({visible: false})
-  }
-
-  my.state = { //U: quiero que se muestre visible apenas aparezca
-    visible: true
-  }
-  
-  
+  my.state = { visible: true } //U: quiero que se muestre visible apenas aparezca
+  function handleClick () { my.setState({visible: false}) }
   window.onclick = function(event) { //A: When the user clicks anywhere outside of the modal, close it
-    if (event.target.id == 'myModal') {
-      my.setState({visible: false})
-    }
+    if (event.target.id == 'myModal') { my.setState({visible: false}) }
   }
 
   my.render = function(){
@@ -388,7 +377,7 @@ uiTablaDetalle= MkUiComponent(function uiTablaDetalle(my) { //U: tabla que muest
           )
         ),
         
-        my.state.mostrarModal ? h(uiModal) : null //A: Modal para ver los files
+        my.state.mostrarModal ? h(uiDetailMedia) : null //A: Modal para ver los files
       )           
 		)
   }
@@ -481,7 +470,7 @@ uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //
 		console.log("onEventMoreInfo",nombreEvento,files)
     if (nombreEvento == PALLETINSPECTION || nombreEvento == UNREGISTERED_ITEMS){
       ArchivosInspeccionElegida = files;
-      my.setState({mostrarModal: true})
+      my.setState({wantsDetailForPalletEvent: true})
     }else{
       my.props.seleccionarEvento(nombreEvento,true)
     }
@@ -492,7 +481,7 @@ uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //
 		return (
 			h('div', {id:'app'},
 
-			my.state.mostrarModal ?  h(uiModal,{},'') : null ,
+			my.state.wantsDetailForPalletEvent ?  h(uiDetailMedia,{},'') : null ,
 
 			GuiaElegida   
 				? h('div',{},	
@@ -597,6 +586,7 @@ App= MkUiComponent(function App(my) {
 			)
 		);
   }
+
 });
 
 //-----------------------------------------------------------------------------
