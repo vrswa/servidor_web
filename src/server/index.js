@@ -33,6 +33,8 @@ var https = require('follow-redirects').https; //VER: https://stackoverflow.com/
 
 //------------------------------------------------------------------
 //S: util
+function ser(o) { return JSON.stringify(o) }
+
 function net_interfaces() { //U: conseguir las interfases de red
 	//SEE: https://stackoverflow.com/questions/3653065/get-local-ip-address-in-node-js
 	var r= {};
@@ -307,9 +309,8 @@ app.get('/api/missionsTODO:', (req, res) => {
 
 //U: se devuelven todos los nombres de archivos de una mision
 app.get('/api/mission/:missionId', (req, res) => {
-	var ruta = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, req.params.missionId, null, false);
-	
-	if (!ruta) res.status(400).send('not file or directory');
+	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, req.params.missionId, null, null, false);
+	if (!ruta) res.status(400).send('Not such file or directory');
 	else{
 		var nombreArchivos = leerContenidoCarpeta(ruta);
 		res.status(200).send(nombreArchivos);
@@ -318,18 +319,17 @@ app.get('/api/mission/:missionId', (req, res) => {
 
 //U: se devuelve un archivo de una mision
 app.get('/api/mission/:missionId/:file', (req, res) => {
-	var protocoloId = req.params.protocolId;
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
+	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
 
-	var ruta = rutaCarpeta(CfgDbBaseDir, protocoloId, missionId, file, false);
+	console.log("Mission file "+ser({missionId, file, ruta}));
+
 	if (fs.existsSync(ruta)){
 		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(_path.resolve(ruta));
-	}else{
-		res.send("not file or directory");
-	}
-})
+	}else{ res.status(404).send("Not such file or directory"); }
+});
 
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload

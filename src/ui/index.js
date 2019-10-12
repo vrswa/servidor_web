@@ -1,6 +1,6 @@
 //S: server and files cfg
 SERVERIP = location.href.match(/(https?:\/\/[^\/]+)/)[0]; //A: tomar protocolo, servidor y puerto de donde esta esta pagina
-CfgManifestUrl = 'api/blk/protocols/demo/missions/demoMission/ManifestExample1.json';
+CfgManifestUrl = 'api/mission/xdemo/index.json';
 CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
 
 //S: INSPECTION NAMES
@@ -60,7 +60,17 @@ async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de lo
 			Manifiestos = await res.json();
 			console.log("Manifests", Manifiestos)
 			ManifiestoElegido= buscarManifiesto(Manifiestos);
-			ManifiestoError= null;
+			if (ManifiestoElegido!= null) {
+				ManifiestoError= null;
+				if (! Array.isArray(ManifiestoElegido.guides)) { ManifiestoElegido.guides= []; }	
+				ManifiestoElegido.guides.forEach( g => {
+					if (! Array.isArray(g.history)) { g.history= []; }	
+					if (! Array.isArray(g.items)) { g.items= []; }	
+					g.items.forEach( it => {
+						if (! Array.isArray(it.history)) { it.history= []; }	
+					});
+				});
+			}
 		} catch (error) {
 			console.error("Manifests", ManifiestoError);
 			ManifiestoError= error || "Reading manifests";
