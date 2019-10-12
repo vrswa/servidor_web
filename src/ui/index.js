@@ -307,14 +307,14 @@ function mostrarError(){  //U: muestra mensaje por consola indicando el error y 
 		historyExample: [{
 							"nombre": "Inspection 1",
 							"lugar": "CDMX Airport",
-							"fechaInicio": "2012-04-23T18:25:43.511Z",
-							"fechaFinalizacion" : "2012-04-23T18:27:56.123Z"
+							"startTime": "2012-04-23T18:25:43.511Z",
+							"endTime" : "2012-04-23T18:27:56.123Z"
 						},
 						{
 							"nombre": "Inspection 2",
 							"estado": "completado/incompleto",
-							"fechaInicio": "2012-04-23T18:25:43.511Z",
-							"fechaFinalizacion" : "2012-04-23T18:27:56.123Z",
+							"startTime": "2012-04-23T18:25:43.511Z",
+							"endTime" : "2012-04-23T18:27:56.123Z",
 							"lugar": "CDMX Airport"  
 						}]
 	})
@@ -443,13 +443,13 @@ uiEventCard= (k,index, onEventMoreInfo) => {
 							h('p',{style:{fontSize: '13px',}},
 
 								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},'Date: '),
-									k.fechaInicio ? JSONtoDATE(k.fechaInicio) : '-'), 
+									k.startTime ? JSONtoDATE(k.startTime) : '-'), 
 
 								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' Start time: '),
-									k.fechaInicio ? JSONtoHour(k.fechaInicio) : '-'),
+									k.startTime ? JSONtoHour(k.startTime) : '-'),
 
 								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' End time: '),
-									k.fechaFinalizacion ? JSONtoHour(k.fechaFinalizacion) : '-'),
+									k.endTime ? JSONtoHour(k.endTime) : '-'),
 
 							),
 						),
