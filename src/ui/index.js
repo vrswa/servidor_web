@@ -394,10 +394,91 @@ uiTablaDetalle= MkUiComponent(function uiTablaDetalle(my) { //U: tabla que muest
   }
 });
 
+uiPreInspectionCard= ({guia, onEventMoreInfo}) =>  //U: tarjeta de preinspeccion, mostramos siempre
+	h(Segment,{clearing:true,style:{'max-height': '152px'}}, // Pre inspection Card, siempre!
+		h('p',{style:{fontSize: '15px'}},
+			h('b',{style:{'font-size':'20px'}},'Event: To be Inspected'),
+			h('div',{},
+				h('b',{style:{'margin-top': '5px'}},' Origin Airport:'), guia.OriginAirport || 'NA' ,
+				h('b',{style:{'margin-top': '5px'}},' Destination Airport:'), guia.DestinationAirport || 'NA',
+			)
+		), 
+		h(Grid,{columns: 'two', style: {}},
+			h(Grid.Row,{},
+				h(Grid.Column,{}, //primer columna  
+					h('p',{style:{fontSize: '13px',}},
+						h('div',{},h('b',{style:{color: COLORS.azulOscuro}},'Items: '), guia.items.length), 
+					),
+				),
+				h(Grid.Column,{}, //otra columna
+					h(Button,{
+							floated:'right',
+							onClick: () => {
+								onEventMoreInfo('Pre Inspection',true);
+								console.log('CLICK Pre Inspection More Info seleccionarEvento');
+								setTimeout(() => {
+									var el= document.getElementById("uiTablaDetalle")	
+									el.scrollIntoView(); //A: movi para que se vea la tabla detalle
+								}, 500);
+							}
+						},
+						h('b',{},'More info')
+					)
+				)
+			)
+		)
+	);
 
-uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) { //U: parte izquierda del grid muestra el estado de la guia
 
-  function mostrarModal(nombreEvento,files) {  //U: muestro modal si el pallet esta daniado sino muestro tabla
+uiEventCard= (k,index, onEventMoreInfo) => {
+	return	k.type != PALLETINSPECTION || (k.type == PALLETINSPECTION && k.problem == true) 
+		? h(Segment,{clearing:true,style:{'max-height': '152px'}},
+				h('p',{style:{fontSize: '15px'}},
+					h('b',{style:{'font-size':'20px'}},'Event: ',k.type),
+					h('div',{}, h('b',{style:{'margin-top': '5px'}},' Place:'), k.lugar)
+				), 
+
+				h(Grid,{columns: 'two', style: {}},
+					h(Grid.Row,{},
+						h(Grid.Column,{}, //primer columna  
+							h('p',{style:{fontSize: '13px',}},
+
+								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},'Date: '),
+									k.fechaInicio ? JSONtoDATE(k.fechaInicio) : '-'), 
+
+								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' Start time: '),
+									k.fechaInicio ? JSONtoHour(k.fechaInicio) : '-'),
+
+								h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' End time: '),
+									k.fechaFinalizacion ? JSONtoHour(k.fechaFinalizacion) : '-'),
+
+							),
+						),
+
+						h(Grid.Column,{}, //otra columna
+							h(Button,
+								{ floated:'right', 
+									onClick: () => {
+										onEventMoreInfo(k.type,k.files)
+										console.log('CLICK More Info onEventMoreInfo');
+										setTimeout(() => {
+											var el= document.getElementById("uiTablaDetalle")	
+											el.scrollIntoView(); //A: movi para que se vea la tabla detalle
+										}, 500);
+									}
+								},
+								h('b',{},'More info'))
+						)
+					)
+				)
+			)
+		: null;
+}
+
+uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //U: parte izquierda del grid muestra el estado de la guia
+
+  function onEventMoreInfo(nombreEvento,files) {  //U: muestro modal si el pallet esta daniado sino muestro tabla
+		console.log("onEventMoreInfo",nombreEvento,files)
     if (nombreEvento == PALLETINSPECTION || nombreEvento == UNREGISTERED_ITEMS){
       ArchivosInspeccionElegida = files;
       my.setState({mostrarModal: true})
@@ -408,125 +489,24 @@ uiGuiasDeEmbarque= MkUiComponent(function uiGuiasDeEmbarque(my) { //U: parte izq
 
 
   my.render= function (props, state) {
-    if (my.props.GuiaDeEmbarque ){
-      my.state = {
-        ...my.state,
-        GuiaDeEmbarque: my.props.GuiaDeEmbarque
-      }
-      guia = my.state.GuiaDeEmbarque;
-    }
-  
-  return (
-    h('div', {id:'app'},
+		return (
+			h('div', {id:'app'},
 
-    my.state.mostrarModal ?  h(uiModal,{},'') : null ,
+			my.state.mostrarModal ?  h(uiModal,{},'') : null ,
 
-    my.state.GuiaDeEmbarque && my.state.GuiaDeEmbarque.history && Array.isArray(my.state.GuiaDeEmbarque.history) ? 
-      h('div',{},
-				h(Segment,{clearing:true,style:{'max-height': '152px'}}, // Pre inspection Card, siempre!
-					h('p',{style:{fontSize: '15px'}},
-						h('b',{style:{'font-size':'20px'}},'Event: To be Inspected'),
-						h('div',{},
-							h('b',{style:{'margin-top': '5px'}},' Origin Airport:'), guia.OriginAirport,
-							h('b',{style:{'margin-top': '5px'}},' Destination Airport:'), guia.DestinationAirport
-						)
-					), 
-					h(Grid,{columns: 'two', style: {}},
-						h(Grid.Row,{},
-							h(Grid.Column,{}, //primer columna  
-								h('p',{style:{fontSize: '13px',}},
-									h('div',{},h('b',{style:{color: COLORS.azulOscuro}},'Items: '), guia.items.length), 
-								),
-							),
-							h(Grid.Column,{}, //otra columna
-								h(Button,{
-										floated:'right',
-										onClick: () => {
-											my.props.seleccionarEvento('Pre Inspection',true);
-											console.log('CLICK More Info seleccionarEvento');
-											setTimeout(() => {
-												var el= document.getElementById("uiTablaDetalle")	
-												el.scrollIntoView(); //A: movi para que se vea la tabla detalle
-											}, 500);
-										}
-									},
-									h('b',{},'More info')
-								)
-							)
-						)
-					)
-				), //  END pre inspection Card
-      
+			GuiaElegida   
+				? h('div',{},	
+						h(uiPreInspectionCard,{guia: GuiaElegida, onEventMoreInfo}),
 
-				my.state.GuiaDeEmbarque.history.map((k,index) => //A: para cada inspeccion registrada en la AWB
-					k.type != PALLETINSPECTION || (k.type == PALLETINSPECTION && k.problem == true) ? 
-						h(Segment,{clearing:true,style:{'max-height': '152px'}},
-							h('p',{style:{fontSize: '15px'}},
-								h('b',{style:{'font-size':'20px'}},'Event: ',k.type),
-								h('div',{}, h('b',{style:{'margin-top': '5px'}},' Place:'), k.lugar)
-							), 
-							h(Grid,{columns: 'two', style: {}},
-								h(Grid.Row,{},
-									h(Grid.Column,{}, //primer columna  
-										h('p',{style:{fontSize: '13px',}},
-
-											h('div',{},h('b',{style:{color: COLORS.azulOscuro}},'Date: '),
-												k.fechaInicio ? JSONtoDATE(k.fechaInicio) : '-'), 
-
-											h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' Start time: '),
-												k.fechaInicio ? JSONtoHour(k.fechaInicio) : '-'),
-
-											h('div',{},h('b',{style:{color: COLORS.azulOscuro}},' End time: '),
-												k.fechaFinalizacion ? JSONtoHour(k.fechaFinalizacion) : '-'),
-
-										),
-									),
-									h(Grid.Column,{}, //otra columna
-										h(Button,
-											{ floated:'right', 
-												onClick: () => {
-													mostrarModal(k.type,k.files)
-													console.log('CLICK More Info mostrarModal');
-													setTimeout(() => {
-														var el= document.getElementById("uiTablaDetalle")	
-														el.scrollIntoView(); //A: movi para que se vea la tabla detalle
-													}, 500);
-												}
-											},
-											h('b',{},'More info'))
-									)
-								)
-							)
-						)
+						Array.isArray(GuiaElegida.history)
+						? GuiaElegida.history.map((guia, idx) => uiEventCard(guia,idx, onEventMoreInfo)) //A: para cada inspeccion registrada en la AWB
 						: null
 					)
-        )
-        : mostrarError()
-      )
-    )
-  }
-});
-
-uiGridField = MkUiComponent(function uiClientPortal(my,props) { //U: grid para dividir la pantalla en dos: inspecciones y detalle 
-  my.render= function (props, state) {  
-    return (
-      h(Grid,{ stackable: true,divided: true, style: {'margin-top': '3%'}},
-        h(Grid.Row,{},
-          h(Grid.Column,{width: '7'},
-            h(uiGuiasDeEmbarque,{GuiaDeEmbarque: props.GuiaDeEmbarque, seleccionarEvento: my.props.seleccionarEvento})            
-          ),
-          h(Grid.Column,{width: '9'},
-            my.props.evento ?  
-              h(uiTablaDetalle,{guia: my.props.GuiaDeEmbarque, evento: my.props.evento,cambiarArchivo: my.props.cambiarArchivo})
-              : 
-              null
-          )
-        )
-      )
+				: mostrarError()
+			)
 		)
   }
 });
-
 
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los demas componentes que muestran el portal de guias
 
@@ -539,7 +519,6 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los dem
     await obtenerManifiesto();//A: cuando se monta el componente cargo la informacion
 		my.setState({}); //A: actualizo, pero uso globales
   }
-
   
   function cambiarGuiaElegida(guiaId,limpiar){  //U: con el id, se cambia la guia en el state
     if(limpiar){
@@ -573,8 +552,21 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los dem
 
           my.state.guiaElegida ? //A: tengo una guia elegida
           h('div',{id: "guiaElegida"}, //A: todo el detalle de la guia, cada inspeccion y si elijo una la tabla
+
             h(Header,{as:'h2', image:'./imagenes/palet.png', content:`Air Waybill: ${my.state.guiaElegida.id}`, style:{'color':'white','font-size':'23px','margin-top':'3%'}},),
-            h(uiGridField, {GuiaDeEmbarque: my.state.guiaElegida, seleccionarEvento: seleccionarEvento, evento: my.state.evento})
+
+						h(Grid,{ stackable: true,divided: true, style: {'margin-top': '3%'}}, //U: grid para dividir la pantalla en dos: inspecciones y detalle 
+							h(Grid.Row,{},
+								h(Grid.Column,{width: '7'},
+									h(uiHistoryForActiveGuide,{GuiaDeEmbarque: GuiaElegida, seleccionarEvento: seleccionarEvento})            
+								),
+								h(Grid.Column,{width: '9'},
+									my.state.evento 
+										?  h(uiTablaDetalle,{guia: GuiaElegida, evento: my.state.evento})
+										: null
+								)
+							)
+						)
           )
           :
           null,
