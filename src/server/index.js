@@ -1,7 +1,8 @@
 //TODO : funciones asincronas name_a
 //TODO: no tendria que haber nombre de cliente hardcodeado
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
-CfgDbBaseDir = 'TGN/protocols'; //A: los protocolos se encuentran aqui
+CfgDbBaseDir = 'DATA/protocols'; //A: los protocolos se encuentran aqui
+
 CfgBlkDataSetDir = 'BLK/dataset';
 CfgBlkProtocolDir = 'BLK/protocols';
 CfgUploadSzMax = 50 * 1024 * 1024; //A: 50MB max file(s) size 
@@ -9,6 +10,7 @@ CfgGithubEnabled = false;
 //URL de github para actualizar los archivos de protocolos y dataset
 GitProtocolDemoUrl = 'https://api.github.com/repos/vrswa/portalBLK/contents/Protocols/Demo';
 GitDatasetUrl ='https://api.github.com/repos/vrswa/portalBLK/contents/DataSets';
+
 //----------------------------------------------------------
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -22,6 +24,7 @@ var fsExtra = require('fs-extra');
 var open = require('open');
 //const https = require('https');
 var https = require('follow-redirects').https; //VER: https://stackoverflow.com/questions/31615477/how-download-file-from-github-com-whith-nodejs-https
+
 //------------------------------------------------------------------
 //S: util
 function net_interfaces() { //U: conseguir las interfases de red
@@ -49,7 +52,8 @@ function net_interfaces() { //U: conseguir las interfases de red
 	// eth0 -> 10.0.0.101
 	return r;
 }
-function leerMisiones (rutaOrigen){
+
+function leerMisiones(rutaOrigen) {
 	var r = new Array();
 	fs.readdirSync(rutaOrigen).forEach(protocolo => {
 		protocolo = protocolo || [];
@@ -73,8 +77,8 @@ function leerMisiones (rutaOrigen){
 	return r;
 }
 
-//VER: descarga un archivo de una url y lo guarda en un destino recibe un callback cuando finaliza
-const downloadFile = (async (url, path) => {
+
+const downloadFile = (async (url, path) => {//U: descarga un archivo de una url y lo guarda en un destino recibe un callback cuando finaliza
 	const res = await fetch(url);
 	const fileStream = fs.createWriteStream(path);
 	await new Promise((resolve, reject) => {
@@ -86,20 +90,18 @@ const downloadFile = (async (url, path) => {
 		  resolve();
 		});
 	  });
-  });
+});
 
-//recibe una ruta y lee todos los archivos con nombre 'index.json' 
-function leerJsonProtocols (ruta,callback) {
-	var r = new Array();
+function leerJsonProtocols(ruta,callback) { //U: devuelve un kv protocolo=carpeta -> contenido index.json, para cada carpeta en la ruta
+	var r= {};
 	fs.readdir(ruta, function(err, carpetas) {
-		if (err) callback (['error reading folders'])
+		if (err) callback({ERROR: 'reading folders'})
 		else{
 			carpetas= carpetas || []; //A: puede no venir ninguna
 			carpetas.forEach(protocolo => {
-				path = rutaCarpeta(ruta,protocolo,null,'index.json',false);
-				if(fs.existsSync(path)){
-					r.push(leerJson(path))
-				}
+				var path = rutaCarpeta(ruta,protocolo,null,'index.json',false);
+				var data = fs.existsSync(path) ? leerJson(path) : {};
+				r[protocolo]= data;
 			});
 			callback(r)
 		}
@@ -118,39 +120,39 @@ limpiarFname("TodoCasiBien.Json");
 limpiarFname("Ok.mp3");
 */
 function limpiarFname(fname, dfltExt) {
-var fnameYext= fname.match(/(.+?)(\.(mp4|mp3|wav|png|jpg|json|txt|pdf))/) || ["",fname, dfltExt||""];
-//A: o tiene una extension aceptada, o le ponemos dfltExt o ""
-var fnameSinExt= fnameYext[1];
-var fnameLimpio= fnameSinExt.replace(/[^a-z0-9_-]/gi,"_") + fnameYext[2];
-//A: en el nombre si no es a-z A-Z 0-9 _ o - reemplazo por _ , y agrego extension aceptada
-return fnameLimpio;
+	var fnameYext= fname.match(/(.+?)(\.(mp4|mp3|wav|png|jpg|json|txt|pdf))/) || ["",fname, dfltExt||""];
+	//A: o tiene una extension aceptada, o le ponemos dfltExt o ""
+	var fnameSinExt= fnameYext[1];
+	var fnameLimpio= fnameSinExt.replace(/[^a-z0-9_-]/gi,"_") + fnameYext[2];
+	//A: en el nombre si no es a-z A-Z 0-9 _ o - reemplazo por _ , y agrego extension aceptada
+	return fnameLimpio;
 }
 
 //U: devuelve la ruta a la carpeta o archivo si wantsCreate es true la crea sino null
 function rutaCarpeta(rutaprevia,folderId,secondfolderId,file,wantsCreate) {
-folderId = limpiarFname(folderId||"_0SinProtocolo_");
-file = file!=null && limpiarFname(file,".dat");
+	folderId = limpiarFname(folderId||"_0SinProtocolo_");
+	file = file!=null && limpiarFname(file,".dat");
 
-var rutaCarpeta = `${rutaprevia}/${folderId}`;
-if (secondfolderId){
-	secondfolderId = limpiarFname(secondfolderId);
-	rutaCarpeta = `${rutaCarpeta}/missions/${secondfolderId}`;
-}
-if (!fs.existsSync(rutaCarpeta)) { 
+	var rutaCarpeta = `${rutaprevia}/${folderId}`;
+	if (secondfolderId){
+		secondfolderId = limpiarFname(secondfolderId);
+		rutaCarpeta = `${rutaCarpeta}/missions/${secondfolderId}`;
+	}
+	if (!fs.existsSync(rutaCarpeta)) { 
 		if (wantsCreate){
-		fs.mkdirSync(rutaCarpeta, {recursive: true});
+			fs.mkdirSync(rutaCarpeta, {recursive: true});
 			//A: crea la carpeta para la mision Y todas las que hagan falta para llegar ahi
 		}else{
 			return null;
 		}
 	}
-//A:tenemos carpeta
-if (file){
-	var rutaArchivo = `${rutaCarpeta}/${file}`;
-	return rutaArchivo;
-}else{
-	return rutaCarpeta;
-}
+	//A:tenemos carpeta
+	if (file){
+		var rutaArchivo = `${rutaCarpeta}/${file}`;
+		return rutaArchivo;
+	}else{
+		return rutaCarpeta;
+	}
 }
 //   TESTS
 //   console.log(rutaCarpeta(CfgDbBaseDir,"mantenimientoTurbina",null,false)) //A: devuelve ruta a protocolo en especifico
@@ -180,17 +182,14 @@ function fileHash(filename, algorithm = 'md5') {
 		}
 	});
 }
-function leerContidoCarpeta (ruta, omitirNombre){
-	//U: devuelve los nombres de archivos y carpeta que contienen una ruta
+
+function leerContenidoCarpeta(ruta, omitirNombre) { //U: devuelve los nombres de archivos y carpeta que contienen una ruta
 	var r = new Array();
 	if (ruta && fs.existsSync(ruta)){
 		fs.readdirSync(ruta).forEach(item => {
 			item = item || [];
-			if (!omitirNombre){
+			if (!omitirNombre || (item != omitirNombre)) {
 				r.push(item);
-			}else{
-				if (item != omitirNombre)
-					r.push(item);
 			}
 		});
 	}
@@ -267,7 +266,9 @@ function actualizarArchivos(DatasetUpdate,callback){
 		githubFiles(url,savePath,callback)
 	}
 }
+
 //--------------------------------------------------------------------
+//S: inicializar app express
 var app = express();
 // Add headers
 //A: solution for cross origing request
@@ -308,24 +309,16 @@ app.get('/', function(req, res) {
 });
 
 
-//--------------------------------------NUEVAS APIS-------------------------------------
+//------------------------------------------------------------
+//S: API estandar, todos los proyectos
 
 //U: devuelve todos los protocolos existentes
 //curl "http://localhost:8888/api/protocols"
 app.get('/api/protocols',(req,res) => {
-	leerJsonProtocols(CfgDbBaseDir, function(vector){
-		res.send(vector)
-	})
+	leerJsonProtocols(CfgDbBaseDir, data => res.send(data) ); //A: devuelve un kv con el index.json de cada protocolo
 });
 
 
-app.get('/api/github',(req,res) => {
-	var url =  "https://raw.githubusercontent.com/vrswa/portalBLK/master/DataSets/pruebaBorrame.json";
-	var url2 = "https://raw.githubusercontent.com/vrswa/portalBLK/master/Protocols/Demo/Demo.lua";
-	nombre = 'prueba.json'
-	//download(url,`./prueba.jsn`,() => res.send('ok') );
-	downloadFile(url,`${CfgBlkDataSetDir}/pruebaBorrame.json`).then( () => res.send('salio bien?'));
-}); 
 
 //U: devuelve los nombres de todos los archivos dentro de un protocolo
 //curl "http://localhost:8888/api/protocols/revisarFiltros"
@@ -337,7 +330,7 @@ app.get('/api/protocols/:protocolId',(req,res) => {
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		res.set('protocolId', protocolId);	
-		res.send(leerContidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
+		res.send(leerContenidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
 	}
 });
 
@@ -351,7 +344,7 @@ app.get('/api/protocols/:protocolId/missions',(req,res) => {
 	
 	if (!ruta) res.status(400).send('not file or directory');
 
-	var nombreMisiones = leerContidoCarpeta(ruta,null);
+	var nombreMisiones = leerContenidoCarpeta(ruta,null);
 	res.status(200).send(nombreMisiones);
 })
 
@@ -382,7 +375,7 @@ app.get('/api/protocols/:protocolId/missions/:missionId',(req,res) => {
 	
 	if (!ruta) res.status(400).send('not file or directory');
 	else{
-		var nombreArchivos = leerContidoCarpeta(ruta);
+		var nombreArchivos = leerContenidoCarpeta(ruta);
 		res.status(200).send(nombreArchivos);
 	}
 })
@@ -429,74 +422,17 @@ app.post('/api/protocols/:protocolsId',(req,res) => {
 	}
 })
 
+
+app.get('/api/github',(req,res) => {
+	var url =  "https://raw.githubusercontent.com/vrswa/portalBLK/master/DataSets/pruebaBorrame.json";
+	var url2 = "https://raw.githubusercontent.com/vrswa/portalBLK/master/Protocols/Demo/Demo.lua";
+	nombre = 'prueba.json'
+	//download(url,`./prueba.jsn`,() => res.send('ok') );
+	downloadFile(url,`${CfgBlkDataSetDir}/pruebaBorrame.json`).then( () => res.send('salio bien?'));
+}); 
+
 //---------------------------------------BLK APIS------------------------------------
-
-//devuelva la lista con los nombres de archivos que estan dentro de la carpeta blk/dataset
-// http://192.168.1.199:8888/api/blk/dataset
-app.get('/api/blk/dataset',(req,res) => {
-	try {
-		actualizarArchivos(true,(err) => 
-		{
-			if (err){
-				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
-			}else{
-				res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))//A: la carpeta mission no la consideramos como archivos
-			}			
-		}
-	)
-	} catch (error) {
-		console.log("FALLO: ", error);
-		res.send(leerContidoCarpeta(CfgBlkDataSetDir,'missions'))
-	}
-});
-
-//devuelve un archivo que esta dentro de la carpeta blk/dataset
-//http://192.168.1.199:8888/api/blk/dataset/prueba1.json
-app.get('/api/blk/dataset/:datasetId',(req,res) => {
-	datasetId = req.params.datasetId;
-	var ruta = rutaCarpeta(CfgBlkDataSetDir,datasetId,null,null,false);
-	if (ruta){
-		let reqPath = `${process.cwd()}/${ruta}`
-		console.log(reqPath);
-        res.sendFile(reqPath)
-	}else{
-		res.send('not file in the dataset main folder')
-	}
-})
-
-//devuelve un array con los JSON de todos los protocolos
-// http://192.168.1.199:8888/api/blk/protocols
-app.get('/api/blk/protocols',(req,res) => {
-	// actualizarArchivos(false,() => 
-	// 	leerJsonProtocols(CfgBlkProtocolDir, function(vector){
-	// 		res.send(vector)
-	// 	})
-	// )
-	try {
-		actualizarArchivos(false,(err) => 
-		{
-			if (err){
-				console.log("enviando dataset antiguo")
-				leerJsonProtocols(CfgBlkProtocolDir, function(vector){
-					res.send(vector)
-				})
-			}else{
-				console.log("enviando dataset actualizado");
-				leerJsonProtocols(CfgBlkProtocolDir, function(vector){
-					res.send(vector)
-				})
-			}			
-		}
-	)
-	} catch (error) {
-		console.log("FALLO: ", error);
-		leerJsonProtocols(CfgBlkProtocolDir, function(vector){
-			res.send(vector)
-		})
-	}
-});
-
-//devuelve una lista con los nombres de los archivos dentro de blk/protocols/porcolID
+//U: devuelve una lista con los nombres de los archivos dentro de blk/protocols/porcolID
 // http://192.168.1.199:8888/api/blk/protocols/revisarFiltros
 app.get('/api/blk/protocols/:protocolsId',async (req,res) => {
 	var protocolId = req.params.protocolsId;
@@ -505,7 +441,7 @@ app.get('/api/blk/protocols/:protocolsId',async (req,res) => {
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		res.set('protocolId', protocolId);	
-		res.send(leerContidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
+		res.send(leerContenidoCarpeta(rutaMision,'missions')); //A: la carpeta mission no la consideramos como archivos
 	}
 });
 
@@ -540,7 +476,7 @@ app.get('/api/blk/protocols/:protocolId/missions/:missionId',(req,res) => {
 	
 	if (!ruta) res.status(400).send('not file or directory');
 	else{
-		var nombreArchivos = leerContidoCarpeta(ruta);
+		var nombreArchivos = leerContenidoCarpeta(ruta);
 		res.status(200).send(nombreArchivos);
 	}
 })
@@ -567,7 +503,7 @@ app.get('/api/blk/protocols/:protocolId/missions/:missionId/:file',(req,res) => 
 })
 
 
-//nos envian via POST uno o varios archivos de una mission
+//U: nos envian via POST uno o varios archivos de una mission
 app.post('/api/blk/protocols/:protocolsId/missions/:missionId',(req,res) => {	
 	var protocolsId = req.params.protocolsId;
 	var missionId = req.params.missionId;
@@ -580,7 +516,7 @@ app.post('/api/blk/protocols/:protocolsId/missions/:missionId',(req,res) => {
 	})
 });
 
-//se envian uno o mas archivos y se guardan en blk/protocols/:protocolsId
+//U: se envian uno o mas archivos y se guardan en blk/protocols/:protocolsId
 app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 	//la ruta es dentro de protocols / protocoldid
 	var ruta  = rutaCarpeta(CfgDbBaseDir,req.params.protocolsId,null,null,true);
@@ -593,12 +529,14 @@ app.post('/api/blk/protocols/:protocolsId',(req,res) => {
 	}
 })
 
-//A se mandam bytes de informacion, la ruta y el offset para guardar en un archivo 
+//U: se mandam bytes de informacion, la ruta y el offset para guardar en un archivo 
 app.post('/api/blk/fileChunk',(req,res) => {
 	ruta = req.body.ruta;
-	informacion = req.body.informacion;
+	ruta = _path.join(process.cwd(),ruta); //TODO:SEC
+
 	offset = parseInt( req.body.offset );
-	ruta = _path.join(process.cwd(),ruta);
+
+	informacion = req.body.informacion;
 	buffer = new Buffer.from(informacion);
 
 	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
@@ -628,7 +566,7 @@ app.post('/api/blk/fileChunk',(req,res) => {
 })
  
 //-----------------------------------------------------------------------------------
-//SEE: listen for requests :)
+//U: listen for requests 
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 	var if2addr= net_interfaces();
 	var k;
@@ -636,5 +574,5 @@ var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
 		var url = 'http://'+if2addr[k]+':'+listener.address().port;
 	 	console.log(k+' : '+ url);
 	}
-	open(url);
+	open(url); //A: lanzamos el browser por defecto
 });
