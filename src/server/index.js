@@ -346,35 +346,28 @@ app.post('/api/mission/:missionId', (req, res) => {
 });
 
 //U: nos envian bytes de informacion, la ruta y el offset para guardar en un archivo 
-app.post('/api/mission/:missionId/fileChunk', (req, res) => {
-	var ruta = req.body.ruta;
-	ruta = _path.join(process.cwd(), ruta); //TODO:SEC
-
-	offset = parseInt( req.body.offset );
-	informacion = req.body.informacion;
-	buffer = new Buffer.from(informacion);
+app.post('/api/mission/:missionId/:fname/chunk', (req, res) => {
+	var missionId= req.params.missionId;
+	var fname= req.params.fname;
+	var ruta= rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, fname, true);
+	//A: cree las carpetas
+	
+	var offset= parseInt( req.body.offset );
+	var buffer= req.files.data.data; //A: buffer SEE: https://www.npmjs.com/package/express-fileupload
 
 	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
-		if (err) console.log(err) // => null
-		
-		fs.open(ruta, 'r+', function(err, fd) {
-			if (err) { throw 'error opening file: ' + err; }
-			else {
-				fs.write(fd, buffer, 0, buffer.length, offset, function(err, bytesWritten) {
-					if (err) res.send({ ok: false, err: err })
-					else {
-						fs.close(fd, () => {
-							res.send({
-								ok: true,
-								ruta: ruta,
-								bytesSend: buffer.length,
-								bytesWritten: bytesWritten
-							});
-						})
-					}
-				});
-			}
-		});
+		if (err) { console.error("Mision Upload Chunk", err); res.status(500).send({error: 'creating file'}) } 
+		else {
+			fs.open(ruta, 'r+', function(err, fd) {
+				if (err) { console.error("Mision Upload Chunk append", err); res.status(500).send({error: 'appending to file'}) } 
+				else {
+					fs.write(fd, buffer, 0, buffer.length, offset, function(err, bytesWritten) {
+						if (err) { console.error("Mision Upload Chunk write", err); res.status(500).send({ error: err }) }
+						else { fs.close(fd, () => { res.send({ bytesReceived: buffer.length, bytesWritten: bytesWritten }); }) }
+					});
+				}
+			});
+		}
 	})
 });
 
