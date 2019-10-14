@@ -1,10 +1,10 @@
 //S: server and files cfg
-SERVERIP = location.href.match(/(https?:\/\/[^\/]+)/)[0]; //A: tomar protocolo, servidor y puerto de donde esta esta pagina
-CfgManifestUrl = 'api/mission/xdemo/index.json';
-CfgFileUrl = 'api/blk/protocols/demo/missions/demoMission';
+ServerUrl = location.href.match(/(https?:\/\/[^\/]+)/)[0]; //A: tomar protocolo, servidor y puerto de donde esta esta pagina
+MissionUrl = ServerUrl+'/api/mission/xdemo';
+ManifestUrl = MissionUrl+'/index.json';
 
 //S: INSPECTION NAMES
-PALLETINSPECTION = "pallet inspection";
+PALLETINSPECTION = "Pallet Inspection";
 I1PACKAGES = "Inspection 1";
 I2STORAGE = "Inspection 2";
 I3UNITS = "Inspection 3";
@@ -41,23 +41,23 @@ function setTheme(t) {
 
 function JSONtoDATE(JSONdate) {  //U: recibe una fecha en formato json y devuelve un string con la fecha dia/mes/anio
 	let fecha = new Date(JSONdate);
-	if (isNaN(fecha))
-		return 'error en fecha'
-	return  `${fecha.getDate()}/${fecha.getMonth()}/${fecha.getFullYear()}`;
+	if (isNaN(fecha)) return 'error en fecha'
+	return  [fecha.getDate(), fecha.getMonth()+1, fecha.getFullYear()].map(n => (n+'').padStart(2,"0")).join("/");
+	//A: ojo, Enero es el mes CERO para getMonth
 }
 
 function JSONtoHour(JSONdate) {
 	let date = new Date(JSONdate);
-	return `${date.getHours()}:${date.getMinutes()}`;
+	return [date.getHours(), date.getMinutes()].map(n => (n+'').padStart(2,"0")).join(":");
 }             
 
 async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de los dataset disponibles
 	ManifiestoError= "Loading manifest"; //DFLT
-	var res = await fetch(`${SERVERIP}/${CfgManifestUrl}`);
+	var res = await fetch(ManifestUrl);
 	if(res.status == 404){ ManifiestoError: "No manifests found (404)"; console.error("Manifests", ManifiestoError); }
 	else{
 		try {
-			Manifiestos = await res.json();
+			Manifiestos = [await res.json()];
 			console.log("Manifests", Manifiestos)
 			ManifiestoElegido= buscarManifiesto(Manifiestos);
 			if (ManifiestoElegido!= null) {
@@ -220,10 +220,9 @@ uiSelectManifestAndGuide = MkUiComponent(function uiSelectManifestAndGuide(my,pr
 });
 
 uiGallery = MkUiComponent (function uiGallery(my){ //U: muestra los archivos de ArchivosInspeccionElegida
-  url = `${SERVERIP}/${CfgFileUrl}`;
 
   function createLink(fileName){
-    my.setState({url: `${SERVERIP}/${CfgFileUrl}/${fileName}`});
+    my.setState({url: `${MissionUrl}/${fileName}`});
     minHeight = '25em';
   }
 
@@ -234,8 +233,8 @@ uiGallery = MkUiComponent (function uiGallery(my){ //U: muestra los archivos de 
           h(Grid.Column,{width: '4', style:{}},
             ArchivosInspeccionElegida.map( fileName => (
               fileName.substring(fileName.length-3) == 'mp4'
-              ?h(Image,{onClick:()=> createLink(fileName),rounded: true,size: 'tiny',centered: true, src: VIDEO_ICON_URL, style:{'margin-top': '5%','cursor': 'pointer'}})
-              :h(Image,{onClick:()=> createLink(fileName), rounded: true,size: 'small',centered: true, bordered: true, src: `${url}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})             
+              ? h(Image,{onClick:()=> createLink(fileName), rounded: true,size: 'tiny',centered: true, src: VIDEO_ICON_URL, style:{'margin-top': '5%','cursor': 'pointer'}})
+              : h(Image,{onClick:()=> createLink(fileName), rounded: true,size: 'small',centered: true, bordered: true, src: `${MissionUrl}/${fileName}`,style:{'margin-top': '5%','cursor': 'pointer'}})
               )
             )
           ),
@@ -252,7 +251,7 @@ uiGallery = MkUiComponent (function uiGallery(my){ //U: muestra los archivos de 
   }
 });
 
-uiDetailMedia= MkUiComponent (function uiModal(my){ //U: componente que muestra un modal y llama a uiGaleria
+uiDetailMedia= MkUiComponent (function uiDetailMedia(my){ //U: componente que muestra un modal y llama a uiGaleria
   var modal= {
     'position': 'fixed', /* Stay in place */
     'z-index': '1', /* Sit on top */
@@ -476,13 +475,13 @@ uiEventCard= (k,index, onEventMoreInfo) => {
 
 uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //U: parte izquierda del grid muestra el estado de la guia
 
-  function onEventMoreInfo(nombreEvento,files) {  //U: muestro modal si el pallet esta daniado sino muestro tabla
-		console.log("onEventMoreInfo",nombreEvento,files)
-    if (nombreEvento == PALLETINSPECTION || nombreEvento == UNREGISTERED_ITEMS){
+  function onEventMoreInfo(tipoEvento,files) {  //U: muestro modal si el pallet esta daniado sino muestro tabla
+		console.log("onEventMoreInfo",tipoEvento,files)
+    if (tipoEvento == PALLETINSPECTION || tipoEvento == UNREGISTERED_ITEMS) {
       ArchivosInspeccionElegida = files;
       my.setState({wantsDetailForPalletEvent: true})
     }else{
-      my.props.seleccionarEvento(nombreEvento,true)
+      my.props.seleccionarEvento(tipoEvento,true)
     }
   }
 
@@ -498,7 +497,7 @@ uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //
 						h(uiPreInspectionCard,{guia: GuiaElegida, onEventMoreInfo}),
 
 						Array.isArray(GuiaElegida.history)
-						? GuiaElegida.history.map((guia, idx) => uiEventCard(guia,idx, onEventMoreInfo)) //A: para cada inspeccion registrada en la AWB
+						? GuiaElegida.history.map((guia, idx) => uiEventCard(guia, idx, onEventMoreInfo)) //A: para cada inspeccion registrada en la AWB
 						: null
 					)
 				: mostrarError()
