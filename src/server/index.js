@@ -61,7 +61,7 @@ function net_interfaces() { //U: conseguir las interfases de red
 	return r;
 }
 
-function leerMisiones(rutaOrigen) {
+function leerMisiones(rutaOrigen) { //TODO: la organizacion de las carpetas cambio. ¿borrar esta funcion?
 	var r = new Array();
 	fs.readdirSync(rutaOrigen).forEach(protocolo => {
 		protocolo = protocolo || [];
@@ -236,9 +236,10 @@ function listaArchivosEnUnaMision(missionId){ //U: devuelve array con archivos y
 function obtenerHashArchivo(ruta, cb) {//U: recibe una ruta y un call back, devuelve el hash de un archivo 
 	if (!fs.existsSync(ruta)) {
 		//A: archivo no existe
-		return cb("not file or directory");
+		console.log("ruta: ", ruta, " No existe")
+		return cb("not file or directory",null);
 	}
-
+	
 	fileHash(ruta).then((hash) => { 
 		console.log("get file hash, ruta: " + ruta +" hash: " + hash);
 		cb (null,hash)
@@ -305,10 +306,9 @@ app.get('/api/missions', (req, res) => {
 	res.status(200).send(nombreMisiones);
 })
 
-//U: se devuelven todas las misiones de todos los protocolos 
-app.get('/api/missionsTODO:', (req, res) => {
-	r = leerMisiones(CfgDbBaseDir);
-	res.send (r)
+//U: se devuelven todas las misiones en DATA/missions
+app.get('/api/missionsTODO', (req, res) => {
+	res.send ( listaNombresDeMisiones() )
 });
 
 
@@ -334,6 +334,18 @@ app.get('/api/mission/:missionId/:file', (req, res) => {
 		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(_path.resolve(ruta));
 	}else{ res.status(404).send("Not such file or directory"); }
+});
+
+app.get('/api/getFileHash/:missionId/:file', (req,res)=>{
+	var missionId = req.params.missionId;
+	var file  = req.params.file;
+	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
+	//A: tengo ruta segura
+	console.log("ruta: ",ruta)
+	obtenerHashArchivo(ruta, (err, hash) => {
+		if (err) return res.send(err);
+		res.send(hash);
+	})
 });
 
 //U: nos envian via POST uno o varios archivos de una mission
