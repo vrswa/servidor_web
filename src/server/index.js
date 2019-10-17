@@ -241,7 +241,17 @@ function guardarArchivos(kvArchivos, rutaPfxSeguro, logPfx, cb){
 	});	
 }
 
-function obtenerHashArchivo(ruta, cb) {
+function listaNombresDeMisiones(){//U: devuelve un array con los nombres de todas las misiones
+	return leerContenidoCarpeta( CfgDbMissionResultsBaseDir )
+} 
+
+function listaArchivosEnUnaMision(missionId){ //U: devuelve array con archivos y carpetas dentro de una mision
+	ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId,null,null,false);
+	//A: si missionId es null , rutaCarpeta le asigna un nombre generico
+	return leerContenidoCarpeta(ruta)
+}
+
+function obtenerHashArchivo(ruta, cb) {//U: recibe una ruta y un call back, devuelve el hash de un archivo 
 	if (!fs.existsSync(ruta)) {
 		//A: archivo no existe
 		return cb("not file or directory");
@@ -249,11 +259,8 @@ function obtenerHashArchivo(ruta, cb) {
 
 	fileHash(ruta).then((hash) => { 
 		console.log("get file hash, ruta: " + ruta +" hash: " + hash);
-		cb (null,{
-			//A:  no se mandan error en callback
-			file: ruta,
-			hash: hash
-		})
+		cb (null,hash)
+		//A:  no se manda error en callback		
 	})
 }
 
@@ -346,19 +353,6 @@ app.get('/api/mission/:missionId/:file', (req, res) => {
 		res.status(200).sendFile(_path.resolve(ruta));
 	}else{ res.status(404).send("Not such file or directory"); }
 });
-
-app.get('/api/getFileHash', (req,res) =>{
-	let ruta = req.body.ruta; //TODO: vericar que ruta es segura
-	if (!ruta) return res.send("error")
-
-	obtenerHashArchivo(ruta, (err, info) =>{
-		//A: info es un key value, que tiene la ruta y el hash
-		
-		if (err) return res.status(400).send('not file or directory');
-		
-		res.send(info)
-	})	
-})
 
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload
