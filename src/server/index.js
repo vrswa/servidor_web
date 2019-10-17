@@ -175,25 +175,7 @@ function stringHash(string, algorithm = 'md5') {
 //U: recibe la ruta de un archivo y devuelve un hash con el md5
 // Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
 //VER: https://gist.github.com/GuillermoPena/9233069
-function fileHash(filename, algorithm = 'md5') {
-	return new Promise((resolve, reject) => {
-		let shasum = crypto.createHash(algorithm);
-		try {
-			let s = fs.ReadStream(filename);
-			s.on('data', function (data) { shasum.update(data) })
-			s.on('end', function () {
-				var hash = shasum.digest('hex')
-				return resolve(hash);
-			});
-		} catch (error) { return reject('calc fail'); }
-	});
-}
-
-
-//U: recibe la ruta de un archivo y devuelve un hash con el md5
-// Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
-//VER: https://gist.github.com/GuillermoPena/9233069
-function fileHash(filename, algorithm = 'md5') {
+function fileHash(filename, algorithm = 'sha256') {
 	return new Promise((resolve, reject) => {
 		let shasum = crypto.createHash(algorithm);
 		try {
@@ -434,7 +416,6 @@ app.get('/api/protocol/:protocolId/:file', (req, res) => {
 		res.status(404).send("no file or Mission");
 	}
 });
-
 
 //-----------------------------------------------------------------------------------
 //U: listen for requests 
