@@ -172,7 +172,7 @@ function stringHash(string, algorithm = 'md5') {
 	return hash;
 }
 
-//U: recibe la ruta de un archivo y devuelve un hash con el md5
+//U: recibe la ruta de un archivo y devuelve un hash con el sha256
 // Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
 //VER: https://gist.github.com/GuillermoPena/9233069
 function fileHash(filename, algorithm = 'sha256') {
@@ -200,6 +200,29 @@ function leerContenidoCarpeta(ruta, omitirNombre) { //U: devuelve los nombres de
 		});
 	}
 	return r;
+}
+
+function filesAndHash(ruta, cb){//U: me devuelve todos los archivos y hashes de una ruta
+	var r = new Array();
+	if (ruta && fs.existsSync(ruta)){
+		listaArchivos =  fs.readdirSync(ruta);
+		hashPendingCnt = listaArchivos.length;
+		//A: tengo una array con todos los archivos y CARPETAS dentro de ruta
+
+		for (let index = 0; index < listaArchivos.length; index++) {
+			rutaArchivo =  `${ruta}/${listaArchivos[index]}`;
+			console.log("rutaArchivo: " , rutaArchivo);
+			obtenerHashArchivo(rutaArchivo, (err, hash) => {
+				hashPendingCnt--; //A: me falta uno menos
+				
+				if (err) r.push({file: listaArchivos[index],hash: 'error'})
+				else					
+					r.push({file: listaArchivos[index],hash: hash});
+				
+				if (hashPendingCnt==0) { cb(r) } //A: si termine, llamo el cb con los hashes
+			})
+		}
+	}
 }
 
 //U: guarda en rutaPfxSeguro/nombreSeguro varios archivos que llegan como parte de un post
@@ -312,13 +335,15 @@ app.get('/api/missionsTODO', (req, res) => {
 });
 
 
-//U: se devuelven todos los nombres de archivos de una mision
-app.get('/api/mission/:missionId', (req, res) => {
+
+app.get('/api/mission/:missionId', (req, res) => { //U: se devuelven todos los nombres de archivos con sus hashes de una mision
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, req.params.missionId, null, null, false);
 	if (!ruta) res.status(400).send('Not such file or directory');
 	else{
-		var nombreArchivos = leerContenidoCarpeta(ruta);
-		res.status(200).send(nombreArchivos);
+		filesAndHash(ruta, (err, arrayFiles) =>{
+			if (err) return res.send (err)
+			res.send(arrayFiles)
+		})
 	}
 })
 
@@ -336,17 +361,18 @@ app.get('/api/mission/:missionId/:file', (req, res) => {
 	}else{ res.status(404).send("Not such file or directory"); }
 });
 
-app.get('/api/getFileHash/:missionId/:file', (req,res)=>{
+app.get('/api/getFileHash/:missionId/:file', (req,res)=>{ //U: devuelve el hash de un archivo en un mision
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
 	//A: tengo ruta segura
-	console.log("ruta: ",ruta)
+
 	obtenerHashArchivo(ruta, (err, hash) => {
 		if (err) return res.send(err);
 		res.send(hash);
 	})
 });
+
 
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload
