@@ -257,8 +257,8 @@ function listaArchivosEnUnaMision(missionId){ //U: devuelve array con archivos y
 }
 
 function obtenerHashArchivo(ruta, cb) {//U: recibe una ruta y un call back, devuelve el hash de un archivo 
-	if (!fs.existsSync(ruta)) {
-		//A: archivo no existe
+	if (!fs.existsSync(ruta) || fs.lstatSync(ruta).isDirectory()) {
+		//A: archivo no existe o es una carpeta
 		console.log("ruta: ", ruta, " No existe")
 		return cb("not file or directory",null);
 	}
@@ -372,7 +372,6 @@ app.get('/api/getFileHash/:missionId/:file', (req,res)=>{ //U: devuelve el hash 
 		res.send(hash);
 	})
 });
-
 
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload
