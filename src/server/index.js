@@ -334,8 +334,6 @@ app.get('/api/missionsTODO', (req, res) => {
 	res.send ( listaNombresDeMisiones() )
 });
 
-
-
 app.get('/api/mission/:missionId', (req, res) => { //U: se devuelven todos los nombres de archivos con sus hashes de una mision
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, req.params.missionId, null, null, false);
 	if (!ruta) res.status(400).send('Not such file or directory');
@@ -372,6 +370,19 @@ app.get('/api/getFileHash/:missionId/:file', (req,res)=>{ //U: devuelve el hash 
 		res.send(hash);
 	})
 });
+//TEST: http://localhost:8888/api/getFileHash/prueba/prueb.pdf
+/**
+ * DATA/missions/misionName/files
+ * 1-carpeta DATA, no existe. 					 return "not file or directory"
+ * 2-carpeta missions, no existe. 				 return "not file or directory"
+ * 3-carpeta prueba(nombre mision), no existe.   return "not file or directory"
+ * 3-archivo , no existe                         return "not file or directory"
+ * 4-archivo y carpetas existe                   return e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+ * 
+ * http://localhost:8888/api/getFileHash/prueba/soyUnaCarpeta
+ * 5-pido hash de una carpeta                    return "not file or directory"
+ * 6-diferentes tipos de archivos (jpg,png,mp4(50mb),mp4(421mb),pdf) return hashes para todos
+ */
 
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload
