@@ -189,14 +189,17 @@ function fileHash(filename, algorithm = 'sha256') {
 	});
 }
 
-function leerContenidoCarpeta(ruta, omitirNombre) { //U: devuelve los nombres de archivos y carpeta que contienen una ruta
+function leerContenidoCarpeta(ruta, omitirCarpetas, omitirArchivos) { //U: devuelve los nombres de archivos y carpeta que contienen una ruta
 	var r = new Array();
 	if (ruta && fs.existsSync(ruta)){
 		fs.readdirSync(ruta).forEach(item => {
 			item = item || [];
-			if (!omitirNombre || (item != omitirNombre)) {
-				r.push(item);
+			rutaCompleta = `${ruta}/${item}`
+		
+			if ((!omitirCarpetas || !fs.lstatSync(rutaCompleta).isDirectory()) && (!omitirArchivos || !fs.lstatSync(rutaCompleta).isFile())){
+				r.push(item)
 			}
+			
 		});
 	}
 	return r;
@@ -247,13 +250,14 @@ function guardarArchivos(kvArchivos, rutaPfxSeguro, logPfx, cb){
 }
 
 function listaNombresDeMisiones(){//U: devuelve un array con los nombres de todas las misiones
-	return leerContenidoCarpeta( CfgDbMissionResultsBaseDir )
+	return leerContenidoCarpeta( CfgDbMissionResultsBaseDir,false,true)
+	//A: quiero solo las carpetas
 } 
 
 function listaArchivosEnUnaMision(missionId){ //U: devuelve array con archivos y carpetas dentro de una mision
 	ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId,null,null,false);
 	//A: si missionId es null , rutaCarpeta le asigna un nombre generico
-	return leerContenidoCarpeta(ruta)
+	return leerContenidoCarpeta(ruta,false,false)
 }
 
 function obtenerHashArchivo(ruta, cb) {//U: recibe una ruta y un call back, devuelve el hash de un archivo 
@@ -325,7 +329,8 @@ app.get('/api/missions', (req, res) => {
 	var ruta = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null, null, false);
 	if (ruta) ruta = _path.join(ruta, "missions");
 	if (!ruta) res.status(400).send('not file or directory');
-	var nombreMisiones = leerContenidoCarpeta(ruta, null);
+	var nombreMisiones = leerContenidoCarpeta(ruta, false,true);
+	//A: tengo solo nombre de carpetas
 	res.status(200).send(nombreMisiones);
 })
 
@@ -443,7 +448,8 @@ app.get('/api/protocol/:protocolId', (req, res) => {
 		res.status(404).send("protocol "+ protocolId+" does not exists");
 	}else{
 		res.set('protocolId', protocolId);	
-		res.send(leerContenidoCarpeta(rutaMision, 'missions')); //A: la carpeta mission no la consideramos como archivos
+		res.send(leerContenidoCarpeta(rutaMision, false,false));
+		//A: devuelvo carpetas y archivos dentro de protocolos
 	}
 });
 
