@@ -294,6 +294,13 @@ app.use(fileUpload({
 //A: accedemos a parametros de posts y uploads, con tamaño maximo controlado
 //A: configuramos middleware de servidor web express, y defaults
 
+
+//S: funciones comunes para express
+function returnNotFound(res){
+	res.status(404).send("not found");
+}
+
+
 //VER: http://expressjs.com/en/starter/static-files.html
 app.use('/ui', express.static(__dirname + '/../ui'));
 app.use('/app', express.static(__dirname + '/../app'));
@@ -364,18 +371,18 @@ app.get('/api/mission/:missionId/:file', (req, res) => {
 	}else{ res.status(404).send("Not such file or directory"); }
 });
 
-app.get('/api/getFileHash/:missionId/:file', (req,res)=>{ //U: devuelve el hash de un archivo en un mision
+app.get('/api/mission/:missionId/:file/hash', (req,res)=>{ //U: devuelve el hash de un archivo en un mision
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
 	//A: tengo ruta segura
 
 	obtenerHashArchivo(ruta, (err, hash) => {
-		if (err) return res.send(err);
+		if (err) return res.status(500).send(err);
 		res.send(hash);
 	})
 });
-//TEST: http://localhost:8888/api/getFileHash/prueba/prueb.pdf
+//TEST: http://localhost:8888/api/mission/prueba/prueb.pdf/hash
 /**
  * DATA/missions/misionName/files
  * 1-carpeta DATA, no existe. 					 return "not file or directory"
@@ -384,8 +391,8 @@ app.get('/api/getFileHash/:missionId/:file', (req,res)=>{ //U: devuelve el hash 
  * 3-archivo , no existe                         return "not file or directory"
  * 4-archivo y carpetas existe                   return e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
  * 
- * http://localhost:8888/api/getFileHash/prueba/soyUnaCarpeta
- * 5-pido hash de una carpeta                    return "not file or directory"
+ * http://localhost:8888/api/mission/prueba/soyUnaCarpeta/hash
+ * 5-pido hash de una carpeta                    return "not such file or directory"
  * 6-diferentes tipos de archivos (jpg,png,mp4(50mb),mp4(421mb),pdf) return hashes para todos
  */
 
