@@ -19,6 +19,7 @@ VIDEO_ICON_URL = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_96
 
 //S: globales
 var usuarioFormularioIngreso = ''; //el nombre que se ingreso en el formulario de ingreso
+var password= '';
 
 Manifiestos= []; //U: array de Manifiestos con toda la informacion que vino en el json
 ManifiestoError= "Loading manifest"; //U: mensaje de que error hubo cargando o null, DFLT
@@ -52,9 +53,18 @@ function JSONtoHour(JSONdate) {
 }             
 
 async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de los dataset disponibles
-	ManifiestoError= "Loading manifest"; //DFLT
-	var res = await fetch(ManifestUrl);
-	if(res.status == 404){ ManifiestoError: "No manifests found (404)"; console.error("Manifests", ManifiestoError); }
+  ManifiestoError= "Loading manifest"; //DFLT
+  
+  var res = await fetch(ManifestUrl,{
+    headers: new Headers({
+      'Authorization': 'Basic '+btoa(`${usuarioFormularioIngreso}:${password}`), 
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }), 
+  });
+  //A: pedi la informacion con mis credenciales
+  console.log("codigo peticion: " + res.status);
+  if(res.status == 401){ ManifiestoError= "User or Password incorrect TRY LOG IN AGAIN"; console.error("Manifests", ManifiestoError); }
+  else if(res.status == 404){ ManifiestoError= "No manifests found (404)"; console.error("Manifests", ManifiestoError); } 
 	else{
 		try {
 			Manifiestos = [await res.json()];
@@ -108,7 +118,10 @@ uiLogin = MkUiComponent (function uiLogin(my){ //U: formulario de ingreso
 
   tecleando = (e, { name, value }) => my.setState({[name]: value});
   enviarFormulario = () => {
-    usuarioFormularioIngreso = my.state.nombre;
+    
+    usuarioFormularioIngreso= my.state.nombre.trim();
+    password= my.state.password.trim();
+
     if(usuarioFormularioIngreso !='' && usuarioFormularioIngreso != null & usuarioFormularioIngreso != undefined){
       if(my.state.password !='' && my.state.password != null & my.state.password != undefined)
       preactRouter.route("/menu")
@@ -540,7 +553,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los dem
         h(uiMenuTopbar,{}),
 
           ManifiestoError  
-            ? h(Segment,{},'ERROR, please fix manifest data and reload. ' + ManifiestoError)
+            ? h(Segment,{},'ERROR, ' + ManifiestoError)
             : h(uiSelectManifestAndGuide,{ //A: si esta cargado el manifiesto muestro los select para que seleccion la guia
 								manifiestoID: ManifiestoElegido.id, 
 								guia: my.state.guiaElegida, 

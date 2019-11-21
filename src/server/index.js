@@ -27,6 +27,7 @@ const _path = require('path');
 var crypto = require('crypto');
 var fsExtra = require('fs-extra');
 var open = require('open');
+const basicAuth = require('express-basic-auth');
 //const https = require('https');
 
 //------------------------------------------------------------------
@@ -312,7 +313,7 @@ app.get('/api/mission/:missionId', (req, res) => { //U: se devuelven todos los n
 })
 
 //U: se devuelve un archivo de una mision
-app.get('/api/mission/:missionId/:file', (req, res) => {
+app.get('/api/mission/:missionId/:file',basicAuth({users:{'admin':'supersecret'}, unauthorizedResponse: 'error'}), (req, res) => {
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
