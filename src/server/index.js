@@ -335,7 +335,7 @@ app.get('/api/isSmartWorkAR', (req, res) => {
 app.get('/api/missions', (req, res) => {
 	var ruta = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null, null, false);
 	if (ruta) ruta = _path.join(ruta, "missions");
-	if (!ruta) res.status(400).send('not file or directory');
+	if (!ruta) return res.status(400).send('not file or directory');
 	var nombreMisiones = leerContenidoCarpeta(ruta, false,true);
 	//A: tengo solo nombre de carpetas
 	res.status(200).send(nombreMisiones);
