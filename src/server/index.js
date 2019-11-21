@@ -24,12 +24,10 @@ var os = require('os'); //A: para interfases
 var fs = require('fs');
 var fileUpload = require('express-fileupload');
 const _path = require('path');
-var fetch = require('node-fetch');
 var crypto = require('crypto');
 var fsExtra = require('fs-extra');
 var open = require('open');
 //const https = require('https');
-var https = require('follow-redirects').https; //VER: https://stackoverflow.com/questions/31615477/how-download-file-from-github-com-whith-nodejs-https
 
 //------------------------------------------------------------------
 //S: util
@@ -61,33 +59,10 @@ function net_interfaces() { //U: conseguir las interfases de red
 	return r;
 }
 
-function leerMisiones(rutaOrigen) { //TODO: la organizacion de las carpetas cambio. ¿borrar esta funcion?
-	var r = new Array();
-	fs.readdirSync(rutaOrigen).forEach(protocolo => {
-		protocolo = protocolo || [];
-		var rutaProtocolo = _path.join(rutaOrigen, protocolo);
-		fs.readdirSync(rutaProtocolo).forEach(file => {
-			file = file || [];
-			if (file == 'missions'){ //A quiero devolver las misiones que se encuentran en la carpeta 'missions'
-				var rutaProtocoloMision = _path.join(rutaProtocolo, file);
-				if (fs.existsSync(rutaProtocoloMision)) { //A: puede no haber misiones para un protocolo
-					fs.readdirSync(rutaProtocoloMision).forEach(mision => {
-						mision = mision || [];
-						ruta = rutaCarpeta(rutaProtocoloMision, mision, null, 'state.json', false);
-						if (fs.existsSync(ruta)){
-							r.push(leerJson(ruta))
-						}	
-					});
-				}
-			}
-		});
-	});
-	return r;
-}
 
 function leerJsonProtocols(ruta, cb) { //U: devuelve un kv protocolo=carpeta -> contenido index.json, para cada carpeta en la ruta
 	var r= {};
-	fs.readdir(ruta, function(err, carpetas) {
+	fs.readdir(ruta, function(err, carpetas) { //SEC:FS:READ
 		if (err) cb({ERROR: 'reading folders'})
 		else{
 			carpetas= carpetas || []; //A: puede no venir ninguna
@@ -102,7 +77,7 @@ function leerJsonProtocols(ruta, cb) { //U: devuelve un kv protocolo=carpeta -> 
 }
 
 function leerJson(ruta){
-	return JSON.parse(fs.readFileSync(ruta));
+	return JSON.parse(fs.readFileSync(ruta)); //SEC:FS:READ
 }
 
 //U: reemplaza extensiones de archivos no aceptadas y caracteres peligrosos por seguros
@@ -132,8 +107,8 @@ function rutaCarpeta(rutaPfx, folderId, secondfolderId, file, wantsCreate) {
 		rutaCarpeta = `${rutaCarpeta}/missions/${secondfolderId}`;
 	}
 
-	if (!fs.existsSync(rutaCarpeta)) { 
-		if (wantsCreate) { fs.mkdirSync(rutaCarpeta, {recursive: true}); }
+	if (!fs.existsSync(rutaCarpeta)) { //SEC:FS:READ
+		if (wantsCreate) { fs.mkdirSync(rutaCarpeta, {recursive: true}); } //SEC:FS:WRITE
 		//A: cree la carpeta para la mision Y todas las que hagan falta para llegar ahi
 		else { return null; }
 	}
@@ -164,7 +139,7 @@ function fileHash(filename, algorithm = 'sha256') {
 	return new Promise((resolve, reject) => {
 		let shasum = crypto.createHash(algorithm);
 		try {
-			let s = fs.ReadStream(filename);
+			let s = fs.ReadStream(filename); //SEC:FS:READ
 			s.on('data', function (data) { shasum.update(data) })
 			s.on('end', function () {
 				var hash = shasum.digest('hex')
@@ -176,8 +151,8 @@ function fileHash(filename, algorithm = 'sha256') {
 
 function leerContenidoCarpeta(ruta, omitirCarpetas, omitirArchivos) { //U: devuelve los nombres de archivos y carpeta que contienen una ruta
 	var r = new Array();
-	if (ruta && fs.existsSync(ruta)){
-		fs.readdirSync(ruta).forEach(item => {
+	if (ruta && fs.existsSync(ruta)){//SEC:FS:READ
+		fs.readdirSync(ruta).forEach(item => { //SEC:FS:READ
 			item = item || [];
 			rutaCompleta = `${ruta}/${item}`
 		
@@ -193,7 +168,7 @@ function leerContenidoCarpeta(ruta, omitirCarpetas, omitirArchivos) { //U: devue
 function filesAndHash(ruta, cb){//U: me devuelve todos los archivos y hashes de una ruta
 	var r = new Array();
 	if (ruta && fs.existsSync(ruta)){
-		listaArchivos =  fs.readdirSync(ruta);
+		listaArchivos =  fs.readdirSync(ruta); //SEC:FS:READ
 		hashPendingCnt = listaArchivos.length;
 		//A: tengo una array con todos los archivos y CARPETAS dentro de ruta
 
@@ -222,7 +197,7 @@ function guardarArchivos(kvArchivos, rutaPfxSeguro, logPfx, cb){
 		var nameOk = limpiarFname(archivo.name, ".dat"); //A: ruta carpeta limpia path (que no tenga .. exe js )
 		var rutaArchivo = _path.join(rutaPfxSeguro, nameOk);
 
-		archivo.mv( rutaArchivo, err => {
+		archivo.mv( rutaArchivo, err => { //SEC:FS:WRITE
 			//A: mostrar hash del archivo
 			fileHash(rutaArchivo).then((hash) => { 
 				hashPendingCnt--; //A: me falta uno menos	
@@ -239,14 +214,8 @@ function listaNombresDeMisiones(){//U: devuelve un array con los nombres de toda
 	//A: quiero solo las carpetas
 } 
 
-function listaArchivosEnUnaMision(missionId){ //U: devuelve array con archivos y carpetas dentro de una mision
-	ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId,null,null,false);
-	//A: si missionId es null , rutaCarpeta le asigna un nombre generico
-	return leerContenidoCarpeta(ruta,false,false)
-}
-
 function obtenerHashArchivo(ruta, cb) {//U: recibe una ruta y un call back, devuelve el hash de un archivo 
-	if (!fs.existsSync(ruta) || fs.lstatSync(ruta).isDirectory()) {
+	if (!fs.existsSync(ruta) || fs.lstatSync(ruta).isDirectory()) { //SEC:FS:READ
 		//A: archivo no existe o es una carpeta
 		console.log("ruta: ", ruta, " No existe")
 		return cb("not file or directory",null);
@@ -350,7 +319,7 @@ app.get('/api/mission/:missionId/:file', (req, res) => {
 
 	console.log("Mission file "+ser({missionId, file, ruta}));
 
-	if (fs.existsSync(ruta)){
+	if (fs.existsSync(ruta)){ //SEC:FS:READ
 		res.set('fileName', req.params.file);	
 		res.status(200).sendFile(_path.resolve(ruta));
 	}else{ res.status(404).send("Not such file or directory"); }
@@ -405,13 +374,13 @@ app.post('/api/mission/:missionId/:fname/chunk', (req, res) => {
 	var offset= parseInt( req.body.offset );
 	var buffer= req.files.data.data; //A: buffer SEE: https://www.npmjs.com/package/express-fileupload
 
-	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in
+	fsExtra.ensureFile(ruta, err => {// A: file has now been created, including the directory it is to be placed in  //SEC:FS:WRITE
 		if (err) { console.error("Mision Upload Chunk", err); res.status(500).send({error: 'creating file'}) } 
 		else {
-			fs.open(ruta, 'r+', function(err, fd) {
+			fs.open(ruta, 'r+', function(err, fd) { //SEC:FS:READ
 				if (err) { console.error("Mision Upload Chunk append", err); res.status(500).send({error: 'appending to file'}) } 
 				else {
-					fs.write(fd, buffer, 0, buffer.length, offset, function(err, bytesWritten) {
+					fs.write(fd, buffer, 0, buffer.length, offset, function(err, bytesWritten) { //SEC:FS:write
 						if (err) { console.error("Mision Upload Chunk write", err); res.status(500).send({ error: err }) }
 						else { fs.close(fd, () => { res.send({ bytesReceived: buffer.length, bytesWritten: bytesWritten }); }) }
 					});
@@ -449,7 +418,7 @@ app.get('/api/protocol/:protocolId', (req, res) => {
 //curl "http://localhost:8888/api/protocols/chekearFiltros/sample.txt"
 app.get('/api/protocol/:protocolId/:file', (req, res) => {	
 	var rutaArchivo = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null, req.params.file, false);
-	if (fs.existsSync(rutaArchivo)){
+	if (fs.existsSync(rutaArchivo)){ //SEC:FS:READ
 		console.log("ruta creada:  ", rutaArchivo);	
 		console.log("archivo pedido: ", req.params.file);
 		res.set('fileName', req.params.file);	
