@@ -4,7 +4,7 @@
 //OjO! cuidar tamaño maximo en uploads
 //OjO! nunca poner nombres ni datos de clientes
 
-//TODO : funciones asincronas name_a
+//TODO: funciones asincronas name_a
 //TODO: validar y formatear json recibido?
 //TODO: algun tipo de token, no pisar archivos a lo bestia ...
 
@@ -85,21 +85,6 @@ function leerMisiones(rutaOrigen) { //TODO: la organizacion de las carpetas camb
 	return r;
 }
 
-
-const downloadFile = (async (url, path) => {//U: descarga un archivo de una url y lo guarda en un destino recibe un cb cuando finaliza
-	const res = await fetch(url);
-	const fileStream = fs.createWriteStream(path);
-	await new Promise((resolve, reject) => {
-		res.body.pipe(fileStream);
-		res.body.on("error", (err) => {
-		  reject(err);
-		});
-		fileStream.on("finish", function() {
-		  resolve();
-		});
-	  });
-});
-
 function leerJsonProtocols(ruta, cb) { //U: devuelve un kv protocolo=carpeta -> contenido index.json, para cada carpeta en la ruta
 	var r= {};
 	fs.readdir(ruta, function(err, carpetas) {
@@ -108,7 +93,7 @@ function leerJsonProtocols(ruta, cb) { //U: devuelve un kv protocolo=carpeta -> 
 			carpetas= carpetas || []; //A: puede no venir ninguna
 			carpetas.forEach(protocolo => {
 				var path = rutaCarpeta(ruta, protocolo, null, 'index.json', false);
-				var data = fs.existsSync(path) ? leerJson(path) : {};
+				var data = fs.existsSync(path) ? leerJson(path) : {}; //SEC:FS:READ
 				r[protocolo]= data;
 			});
 			cb(r)
@@ -149,7 +134,7 @@ function rutaCarpeta(rutaPfx, folderId, secondfolderId, file, wantsCreate) {
 
 	if (!fs.existsSync(rutaCarpeta)) { 
 		if (wantsCreate) { fs.mkdirSync(rutaCarpeta, {recursive: true}); }
-			//A: cree la carpeta para la mision Y todas las que hagan falta para llegar ahi
+		//A: cree la carpeta para la mision Y todas las que hagan falta para llegar ahi
 		else { return null; }
 	}
 	//A:tenemos carpeta
