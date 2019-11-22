@@ -24,17 +24,16 @@ CfgUsers={ //U: los usuarios y contraseñas que dejamos pasar
 
 //----------------------------------------------------------
 //S: dependencias
-var express = require('express');
-var bodyParser = require('body-parser');
-var os = require('os'); //A: para interfases
-var fs = require('fs');
-var fileUpload = require('express-fileupload');
-const _path = require('path');
-var crypto = require('crypto');
-var fsExtra = require('fs-extra');
-var open = require('open');
-const basicAuth = require('express-basic-auth');
-//const https = require('https');
+var express= require('express');
+var bodyParser= require('body-parser');
+var os= require('os'); //A: para interfases
+var fs= require('fs');
+var fileUpload= require('express-fileupload');
+var _path= require('path');
+var crypto= require('crypto');
+var fsExtra= require('fs-extra');
+var open= require('open');
+var basicAuth= require('express-basic-auth');
 
 //------------------------------------------------------------------
 //S: util
@@ -334,7 +333,8 @@ app.get('/api/missions', verificarAuth, (req, res) => {
 	res.send ( listaNombresDeMisiones() )
 });
 
-app.get('/api/mission/:missionId', verificarAuth, (req, res) => { //U: se devuelven todos los nombres de archivos con sus hashes de una mision
+//U: se devuelven todos los nombres de archivos con sus hashes de una mision
+app.get('/api/mission/:missionId', (req, res) => { 
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, req.params.missionId, null, null, false);
 	if (!ruta) res.status(400).send('Not such file or directory');
 	else{
