@@ -57,6 +57,7 @@
     "cross-fetch": "^3.0.1",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.4",
+    "express-basic-auth": "^1.2.0",
     "express-fileupload": "^1.1.5",
     "foodoc": "0.0.9",
     "git-rev-sync": "^1.8.0",

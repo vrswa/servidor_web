@@ -18,17 +18,16 @@ CfgIsSmartWorkArNonce= "LaRealidadSeraAumentadaONoSera"; //U: un secreto compart
 
 //----------------------------------------------------------
 //S: dependencias
-var express = require('express');
-var bodyParser = require('body-parser');
-var os = require('os'); //A: para interfases
-var fs = require('fs');
-var fileUpload = require('express-fileupload');
-const _path = require('path');
-var crypto = require('crypto');
-var fsExtra = require('fs-extra');
-var open = require('open');
-const basicAuth = require('express-basic-auth');
-//const https = require('https');
+var express= require('express');
+var bodyParser= require('body-parser');
+var os= require('os'); //A: para interfases
+var fs= require('fs');
+var fileUpload= require('express-fileupload');
+var _path= require('path');
+var crypto= require('crypto');
+var fsExtra= require('fs-extra');
+var open= require('open');
+var basicAuth= require('express-basic-auth');
 
 //------------------------------------------------------------------
 //S: util
@@ -297,11 +296,12 @@ app.get('/api/missions', (req, res) => {
 })
 
 //U: se devuelven todas las misiones en DATA/missions
-app.get('/api/missionsTODO', (req, res) => {
+app.get('/api/missionsTODO', (req, res) => { 
 	res.send ( listaNombresDeMisiones() )
 });
 
-app.get('/api/mission/:missionId', (req, res) => { //U: se devuelven todos los nombres de archivos con sus hashes de una mision
+//U: se devuelven todos los nombres de archivos con sus hashes de una mision
+app.get('/api/mission/:missionId', (req, res) => { 
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, req.params.missionId, null, null, false);
 	if (!ruta) res.status(400).send('Not such file or directory');
 	else{
@@ -313,7 +313,7 @@ app.get('/api/mission/:missionId', (req, res) => { //U: se devuelven todos los n
 })
 
 //U: se devuelve un archivo de una mision
-app.get('/api/mission/:missionId/:file',basicAuth({users:{'admin':'supersecret'}, unauthorizedResponse: 'error'}), (req, res) => {
+app.get('/api/mission/:missionId/:file', basicAuth({users:{'admin':'supersecret'}, unauthorizedResponse: 'error'}), (req, res) => {
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
