@@ -58,11 +58,12 @@ function isValidAuthToken(token) { //U: valida un token generado con genToken en
 
 //TODO: usar token como en https://stackoverflow.com/a/42280739  en especial para los mp4 etc
 var verificarAuth= function (req, res, next) { //U: como autenticamos y autorizamos
+	var path= req.path;
 	var token= req.query.tk; //U: aceptamos un hash = token en la url ejemplo para mp4
-	console.log("verificarAuth token " + token);
+	console.log("verificarAuth path " + path + " token " + token);
 	if ( isValidAuthToken(token) ) { next(); } //A: nos paso un token valido en la url, lo dejamos seguir //TODO: revisar token en un funcion salt + hash
 	else { //A: no nos paso token valido revisamos Header 
-		console.log("verificarAuth hdr Authorization " + req.header('Authorization'));
+		console.log("verificarAuth path " + path + " hdr Authorization " + req.header('Authorization'));
 		verificarBasic(req,res,next); 
 	} 
 }; 
