@@ -57,7 +57,7 @@ async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de lo
   
   var res = await fetch(ManifestUrl,{
     headers: new Headers({
-      'Authorization': 'Basic '+btoa(`${usuarioFormularioIngreso}:${password}`), 
+      'Authorization': 'Basic '+btoa(`${usuarioFormularioIngreso}:${password}`), //TODO: encapsular fetch en una funcion "conseguirDelServidor" con autenticacion, usar un metodo que no mande la misma todas las veces y tampoco sin ecnriptar
       'Content-Type': 'application/x-www-form-urlencoded'
     }), 
   });
