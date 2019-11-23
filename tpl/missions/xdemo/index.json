@@ -1,0 +1,60 @@
+{ 
+	"id":"AM00057",
+		"dateDeparture":"8/6/19",
+		"guides":[ 
+		{ 
+			"id":"139-4437616",
+			"manifestId":"AM00057",
+			"history":[],
+			"items":[ 
+			{ 
+				"id":"ITM-000001-0001-001",
+				"name":"SPICY MUSTARD",
+				"packages":3,
+				"units":27,
+				"history":[]
+			},
+			{ 
+				"id":"ITM-000001-0001-002",
+				"name":"PWB ASSY",
+				"packages":6,
+				"units":30,
+				"history":[]
+			},
+			{ 
+				"id":"ITM-000001-0001-003",
+				"name":"POKEMON BELT",
+				"packages":8,
+				"units": 40,
+				"history":[]
+			}
+			]
+		},
+		{ 
+			"id":"139-4437617",
+			"history":[],
+			"items":[ 
+			{ 
+				"id":"ITM-000001-0002-001",
+				"name":"REALWEAR HMT1",
+				"packages":5,
+				"units":25,
+				"history":[]
+			}
+			]
+		},
+		{ 
+			"id":"139-4437618",
+			"history":[],
+			"items":[ 
+			{ 
+				"id":"ITM-000001-0003-001",
+				"name":"DELL LAPTOP",
+				"packages":3,
+				"units":15,
+				"history":[]
+			}
+			]
+		}
+	]
+}

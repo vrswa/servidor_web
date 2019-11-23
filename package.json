@@ -27,6 +27,7 @@
   "pkg": {
     "assets": [
       "src/**/*",
+      "tpl/**/*",
       "/node_modules/leaflet/dist/leaflet.js",
       "/node_modules/proj4/dist/proj4.js",
       "/node_modules/highland/dist/highland.js",

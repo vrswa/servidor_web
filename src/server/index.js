@@ -8,20 +8,6 @@
 //TODO: validar y formatear json recibido?
 //TODO: algun tipo de token, no pisar archivos a lo bestia ...
 
-CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
-CfgDbBaseDir= 'DATA'; //U: los datos se guardar aqui
-CfgDbMissionResultsBaseDir= CfgDbBaseDir + '/missions'; //U: resultados de misiones que recibimos
-
-CfgUploadSzMax= 50 * 1024 * 1024; //U: 50MB max file(s) size 
-
-CfgIsSmartWorkArNonce= "LaRealidadSeraAumentadaONoSera"; //U: un secreto compartido con el cliente para identificar el servidor
-
-CfgUsers={ //U: los usuarios y contraseñas que dejamos pasar
-	'admin':'secret',//U: el usuario real que hace la demo 
-	'rwdev':'devpwd' //U: el dispositivo cuando sube los archivos
-};
-
-
 //----------------------------------------------------------
 //S: dependencias
 var express= require('express');
@@ -32,8 +18,26 @@ var fileUpload= require('express-fileupload');
 var _path= require('path');
 var crypto= require('crypto');
 var fsExtra= require('fs-extra');
+var shell= require('shelljs');
 var open= require('open');
 var basicAuth= require('express-basic-auth');
+
+//----------------------------------------------------------
+//S: config
+
+CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
+CfgDbBaseDir= 'DATA'; //U: los datos se guardar aqui
+CfgDbMissionResultsBaseDir= CfgDbBaseDir + '/missions'; //U: resultados de misiones que recibimos
+CfgMissionDemoPath= _path.join(__dirname, '../../tpl/missions/xdemo');
+CfgUploadSzMax= 50 * 1024 * 1024; //U: 50MB max file(s) size 
+
+CfgIsSmartWorkArNonce= "LaRealidadSeraAumentadaONoSera"; //U: un secreto compartido con el cliente para identificar el servidor
+
+CfgUsers={ //U: los usuarios y contraseñas que dejamos pasar
+	'admin':'secret',//U: el usuario real que hace la demo 
+	'rwdev':'devpwd' //U: el dispositivo cuando sube los archivos
+};
+
 
 //------------------------------------------------------------------
 //S: util
@@ -426,6 +430,16 @@ app.post('/api/mission/:missionId/:fname/chunk', verificarAuth, (req, res) => {
 			});
 		}
 	})
+});
+
+//U: reiniciar una mision al estado default
+app.get('/api/demo/mission/:missionId/reset', verificarAuth, (req, res) => {	
+	var missionId= req.params.missionId;
+	var ruta= rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, null, true);
+	//SEE: https://www.npmjs.com/package/shelljs
+	shell.rm('-rf', ruta);
+	shell.cp('-R', CfgMissionDemoPath, ruta);
+	res.send("OK");
 });
 
 //------------------------------------------------------------

@@ -1,21 +1,22 @@
 //S: server and files cfg
-ServerUrl = location.href.match(/(https?:\/\/[^\/]+)/)[0]; //A: tomar protocolo, servidor y puerto de donde esta esta pagina
-MissionUrl = ServerUrl+'/api/mission/xdemo';
-ManifestUrl = MissionUrl+'/index.json';
+ServerUrl= location.href.match(/(https?:\/\/[^\/]+)/)[0]; //A: tomar protocolo, servidor y puerto de donde esta esta pagina
+MissionUrl= ServerUrl+'/api/mission/xdemo';
+ManifestUrl= MissionUrl+'/index.json';
+ResetDemoUrl= ServerUrl+'/api/demo/mission/xdemo/reset';
 
 //S: INSPECTION NAMES
-PALLETINSPECTION = "Pallet Inspection";
-I1PACKAGES = "Inspection 1";
-I2STORAGE = "Inspection 2";
-I3UNITS = "Inspection 3";
-UNREGISTERED_ITEMS = "Unregistered items";
+PALLETINSPECTION= "Pallet Inspection";
+I1PACKAGES= "Inspection 1";
+I2STORAGE= "Inspection 2";
+I3UNITS= "Inspection 3";
+UNREGISTERED_ITEMS= "Unregistered items";
 
 //colores rgb de la empresa BLK
 COLORS = {
   azulOscuro: 'rgb(56,87,162)',
   azulClaro: 'rgb(105,178,226)',
 }
-VIDEO_ICON_URL = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
+VIDEO_ICON_URL = '/ui/imagenes/video_play.png'
 
 //S: globales
 var usuario = ''; //el nombre que se ingreso en el formulario de ingreso
@@ -57,6 +58,17 @@ function JSONtoHour(JSONdate) {
 	let date = new Date(JSONdate);
 	return [date.getHours(), date.getMinutes()].map(n => (n+'').padStart(2,"0")).join(":");
 }             
+
+async function resetDemo() { //U: borra el directorio con datos y lo vuelve al estado inicial
+  var res = await fetch(ResetDemoUrl,{
+    headers: new Headers({
+      'Authorization': 'Basic '+btoa(`${usuario}:${password}`), //TODO: encapsular fetch en una funcion "conseguirDelServidor" con autenticacion, usar un metodo que no mande la misma todas las veces y tampoco sin ecnriptar
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }), 
+  });
+	alert("La demo ha vuelto al estado inicial");
+	window.location.reload();
+}
 
 async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de los dataset disponibles
   ManifiestoError= "Loading manifest"; //DFLT
@@ -167,8 +179,11 @@ uiMenuTopbar= MkUiComponent(function uiMenuTopbar(my) {//U: menu principal de la
           ),
           h(Menu.Item,{},
             
+            h(Button, {onClick: resetDemo, style:{'background-color': '#600000','color':'rgb(255,255,255)', marginRight: '5px'}},"reset" ),
+
             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': COLORS.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
-            h(Button, {icon: true,labelPosition:'left',onClick: () =>window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},
+
+            h(Button, {icon: true,labelPosition:'left',onClick: () => window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},
               h(Icon,{name:'refresh'}),
               "Refresh" 
             )
