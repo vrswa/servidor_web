@@ -67,7 +67,7 @@ async function resetDemo() { //U: borra el directorio con datos y lo vuelve al e
     }), 
   });
 	alert("La demo ha vuelto al estado inicial");
-	window.location.reload();
+	window.location.href='/';		
 }
 
 async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de los dataset disponibles
@@ -183,7 +183,7 @@ uiMenuTopbar= MkUiComponent(function uiMenuTopbar(my) {//U: menu principal de la
 
             h(Button, {onClick: () =>preactRouter.route("/"), style:{'background-color': COLORS.azulClaro,'color':'rgb(255,255,255)'}},"Log Out" ),
 
-            h(Button, {icon: true,labelPosition:'left',onClick: () => window.location.reload(), color: 'green',style:{ 'margin-left': '15px'}},
+            h(Button, {icon: true,labelPosition:'left',onClick: props.onRefresh, color: 'green',style:{ 'margin-left': '15px'}},
               h(Icon,{name:'refresh'}),
               "Refresh" 
             )
@@ -542,17 +542,20 @@ uiHistoryForActiveGuide= MkUiComponent(function uiHistoryForActiveGuide(my) { //
 });
 
 uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los demas componentes que muestran el portal de guias
+	var refreshManifest= async function () { //U: carga o vuelve a cargar los datos
+		ManifiestoElegido= null;
+    await obtenerManifiesto();//A: cuando se monta el componente cargo la informacion
+		cambiarGuiaElegida(guiaID, true);
+		my.setState({}); //A: actualizo, pero uso globales
+  };
 
   my.componentWillMount = function () {
     document.body.style.backgroundColor = 'rgb(49, 84, 165)';
 		//A: cambie el fondo de todo el documento
   }
 
-  my.componentDidMount = async function () {
-    await obtenerManifiesto();//A: cuando se monta el componente cargo la informacion
-		my.setState({}); //A: actualizo, pero uso globales
-  }
-  
+  my.componentDidMount = refreshManifest();
+
   function cambiarGuiaElegida(guiaId,limpiar){  //U: con el id, se cambia la guia en el state
     if(limpiar){
       my.setState({archivo: null, history: null}),
@@ -572,7 +575,7 @@ uiClientPortal= MkUiComponent(function uiClientPortal(my) { //U: llama a los dem
   my.render= function (props, state) { //U: aca se dibuja toda la pagina segun el estado
     return (
       h(Container, {},
-        h(uiMenuTopbar,{}),
+        h(uiMenuTopbar,{onRefresh: refreshManifest}),
 
           ManifiestoError  
             ? h(Segment,{},'ERROR, ' + ManifiestoError)
