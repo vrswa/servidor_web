@@ -18,8 +18,14 @@ COLORS = {
 VIDEO_ICON_URL = 'https://cdn.pixabay.com/photo/2015/12/03/01/27/play-1073616_960_720.png'
 
 //S: globales
-var usuarioFormularioIngreso = ''; //el nombre que se ingreso en el formulario de ingreso
+var usuario = ''; //el nombre que se ingreso en el formulario de ingreso
 var password= '';
+
+function genToken() { //U: genera un token unico para autenticarse con el servidor
+  var salt= Math.floor((Math.random() * 10000000)).toString(16).substr(0,4);
+  var token= salt+CryptoJS.SHA256(salt + usuario + password).toString(); //TODO: defenir stringHash() como en el server
+  return token;
+}
 
 Manifiestos= []; //U: array de Manifiestos con toda la informacion que vino en el json
 ManifiestoError= "Loading manifest"; //U: mensaje de que error hubo cargando o null, DFLT
@@ -57,7 +63,7 @@ async function obtenerManifiesto() {   //U: funcion que obtiene los nombre de lo
   
   var res = await fetch(ManifestUrl,{
     headers: new Headers({
-      'Authorization': 'Basic '+btoa(`${usuarioFormularioIngreso}:${password}`), //TODO: encapsular fetch en una funcion "conseguirDelServidor" con autenticacion, usar un metodo que no mande la misma todas las veces y tampoco sin ecnriptar
+      'Authorization': 'Basic '+btoa(`${usuario}:${password}`), //TODO: encapsular fetch en una funcion "conseguirDelServidor" con autenticacion, usar un metodo que no mande la misma todas las veces y tampoco sin ecnriptar
       'Content-Type': 'application/x-www-form-urlencoded'
     }), 
   });
@@ -119,10 +125,10 @@ uiLogin = MkUiComponent (function uiLogin(my){ //U: formulario de ingreso
   tecleando = (e, { name, value }) => my.setState({[name]: value});
   enviarFormulario = () => {
     
-    usuarioFormularioIngreso= my.state.nombre.trim();
+    usuario= my.state.nombre.trim();
     password= my.state.password.trim();
 
-    if(usuarioFormularioIngreso !='' && usuarioFormularioIngreso != null & usuarioFormularioIngreso != undefined){
+    if(usuario !='' && usuario != null & usuario != undefined){
       if(my.state.password !='' && my.state.password != null & my.state.password != undefined)
       preactRouter.route("/menu")
     }
@@ -156,7 +162,7 @@ uiMenuTopbar= MkUiComponent(function uiMenuTopbar(my) {//U: menu principal de la
         h(Menu.Menu,{position:'right'},
           h(Menu.Item,{},
             h(Icon,{name:'user',size:'big',style:{'color': COLORS.azulOscuro}}),
-            h('p',{style:{'color': COLORS.azulOscuro}}, `Welcome ${usuarioFormularioIngreso ? usuarioFormularioIngreso : ''}`,)
+            h('p',{style:{'color': COLORS.azulOscuro}}, `Welcome ${usuario ? usuario : ''}`,)
             
           ),
           h(Menu.Item,{},
@@ -235,10 +241,11 @@ uiSelectManifestAndGuide = MkUiComponent(function uiSelectManifestAndGuide(my,pr
 uiGallery = MkUiComponent (function uiGallery(my){ //U: muestra los archivos de ArchivosInspeccionElegida
 
   function createLink(fileName){
-    my.setState({url: `${MissionUrl}/${fileName}`});
+    my.setState({url: `${MissionUrl}/${fileName}?tk=${genToken()}`}); //A: la url incluye el token de autorizacion
     minHeight = '25em';
   }
 
+  //TODO: asegurar que le pasamos el token a todos los que necesitan imagenes videos etc.
   my.render = function(){
     return (
       h(Grid,{ stackable: true,divided: true,},

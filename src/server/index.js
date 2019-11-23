@@ -16,6 +16,12 @@ CfgUploadSzMax= 50 * 1024 * 1024; //U: 50MB max file(s) size
 
 CfgIsSmartWorkArNonce= "LaRealidadSeraAumentadaONoSera"; //U: un secreto compartido con el cliente para identificar el servidor
 
+CfgUsers={ //U: los usuarios y contraseñas que dejamos pasar
+	'admin':'secret',//U: el usuario real que hace la demo 
+	'rwdev':'devpwd' //U: el dispositivo cuando sube los archivos
+};
+
+
 //----------------------------------------------------------
 //S: dependencias
 var express= require('express');
@@ -31,6 +37,33 @@ var basicAuth= require('express-basic-auth');
 
 //------------------------------------------------------------------
 //S: util
+
+var verificarBasic=  basicAuth({ //U: funcion middleware estandar para autenticar
+	users: CfgUsers, 
+	unauthorizedResponse: 'error'
+	}
+);
+
+function isValidAuthToken(token) { //U: valida un token generado con genToken en el cliente
+	if ( typeof(token) != 'string' || token.length < 4) return null; //A: token invalido
+
+	var salt= token.substr(0,4); //A: nos la manda al principio del token
+	var usuarioOK= Object.entries(CfgUsers).find( userYpass => {
+		var tokenDeberiaSer= salt+stringHash(salt + userYpass[0] + userYpass[1]);
+		//DBG: console.log("isValidAuthToken comparo : token " , token , " tokenDeberiaSer: " , tokenDeberiaSer);
+		return tokenDeberiaSer == token; //A: Si el que nos mandaron con la salt hashea igual que el que tenemos guardado OK
+	})
+	return usuarioOK; //A: undefined o el usuario que coincide
+}
+
+//TODO: usar token como en https://stackoverflow.com/a/42280739  en especial para los mp4 etc
+var verificarAuth= function (req, res, next) { //U: como autenticamos y autorizamos
+	var token= req.query.tk; //U: aceptamos un hash = token en la url ejemplo para mp4
+	console.log("verificarAuth token " + token);
+	if ( isValidAuthToken(token) ) { next(); } //A: nos paso un token valido en la url, lo dejamos seguir //TODO: revisar token en un funcion salt + hash
+	else { verificarBasic(req,res,next); } //A: no nos paso token valido revisamos Header 
+}; 
+
 function ser(o) { return JSON.stringify(o) }
 
 function net_interfaces() { //U: conseguir las interfases de red
@@ -125,7 +158,7 @@ function rutaCarpeta(rutaPfx, folderId, secondfolderId, file, wantsCreate) {
 //U: hash para un string
 // Other algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...depends on availability of OpenSSL on platform
 //VER: https://gist.github.com/GuillermoPena/9233069
-function stringHash(string, algorithm = 'md5') {
+function stringHash(string, algorithm = 'sha256') {
 	let shasum = crypto.createHash(algorithm);
 	shasum.update(string)
 	var hash = shasum.digest('hex')
@@ -271,7 +304,7 @@ app.get('/', function(req, res) { res.redirect('/ui/'); });
 //U: responder para cuando cliente busca servidor escaneando la red
 //TEST: H=`curl 'http://localhost:8888/api/isSmartWorkAR?nonce=MiSecretoComoCliente1'`; if [ "$H" == "bc86f7dfe95687c6faf5a632b790c458" ] ; then echo "OK" ; fi
 //TEST: H=`curl 'http://localhost:8888/api/isSmartWorkAR?nonce=MiSecretoComoCliente2'`; if [ "$H" == "98b2a107561e8d5cdfd997efdc599268" ] ; then echo "OK" ; fi
-app.get('/api/isSmartWorkAR', (req, res) => {
+app.get('/api/isSmartWorkAR', verificarAuth,  (req, res) => {
 	var clientNonce= req.query.nonce || 'thisMayBeASecret'; //A: el cliente manda un texto al azar
 	console.log('Scan isSmartWorkAR nonce: '+clientNonce);
 	var hash= stringHash(clientNonce + '\t' + CfgIsSmartWorkArNonce); 
@@ -286,7 +319,7 @@ app.get('/api/isSmartWorkAR', (req, res) => {
 //curl "http://localhost:8888/api/missions" no existe carpeta missions
 //curl "http://localhost:8888/api/missions/noExisto"  no existe protocolos
 //curl "http://localhost:8888/api/missions"
-app.get('/api/missions', (req, res) => {
+app.get('/api/missions', verificarAuth,  (req, res) => {
 	var ruta = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null, null, false);
 	if (ruta) ruta = _path.join(ruta, "missions");
 	if (!ruta) return res.status(400).send('not file or directory');
@@ -296,7 +329,7 @@ app.get('/api/missions', (req, res) => {
 })
 
 //U: se devuelven todas las misiones en DATA/missions
-app.get('/api/missionsTODO', (req, res) => { 
+app.get('/api/missions', verificarAuth, (req, res) => {
 	res.send ( listaNombresDeMisiones() )
 });
 
@@ -313,7 +346,8 @@ app.get('/api/mission/:missionId', (req, res) => {
 })
 
 //U: se devuelve un archivo de una mision
-app.get('/api/mission/:missionId/:file', basicAuth({users:{'admin':'supersecret'}, unauthorizedResponse: 'error'}), (req, res) => {
+//curl --user admin:supersecret http://localhost:8888/api/mission/xdemo/index.json
+app.get('/api/mission/:missionId/:file', verificarAuth, (req, res) => {
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
@@ -326,7 +360,7 @@ app.get('/api/mission/:missionId/:file', basicAuth({users:{'admin':'supersecret'
 	}else{ res.status(404).send("Not such file or directory"); }
 });
 
-app.get('/api/mission/:missionId/:file/hash', (req,res)=>{ //U: devuelve el hash de un archivo en un mision
+app.get('/api/mission/:missionId/:file/hash', verificarAuth, (req,res)=>{ //U: devuelve el hash de un archivo en un mision
 	var missionId = req.params.missionId;
 	var file  = req.params.file;
 	var ruta = rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, file, false);
@@ -354,7 +388,7 @@ app.get('/api/mission/:missionId/:file/hash', (req,res)=>{ //U: devuelve el hash
 //U: nos envian via POST uno o varios archivos de una mission
 //U: curl -F 'file=@package.json' http://localhost:8888/api/mission/xtestUpload
 //U: curl -F 'file=@package.json' -F 'file2=@README.md' http://localhost:8888/api/mission/xtestUpload ; echo ; for i in package.json README.md ; do if cmp DATA/missions/xtestUpload/$i $i ; then echo "OK $i"; fi; done
-app.post('/api/mission/:missionId', (req, res) => {	
+app.post('/api/mission/:missionId', verificarAuth, (req, res) => {	
 	if (!req.files) {  return res.status(400); } 
 	//A: sino me mandaron nigun file devolvi 400
 
@@ -366,7 +400,7 @@ app.post('/api/mission/:missionId', (req, res) => {
 });
 
 //U: nos envian bytes de informacion, la ruta y el offset para guardar en un archivo 
-app.post('/api/mission/:missionId/:fname/chunk', (req, res) => {
+app.post('/api/mission/:missionId/:fname/chunk', verificarAuth, (req, res) => {
 	var missionId= req.params.missionId;
 	var fname= req.params.fname;
 	var ruta= rutaCarpeta(CfgDbMissionResultsBaseDir, missionId, null, fname, true);
@@ -396,14 +430,14 @@ app.post('/api/mission/:missionId/:fname/chunk', (req, res) => {
 
 //U: devuelve todos los protocolos existentes
 //curl "http://localhost:8888/api/protocols"
-app.get('/api/protocols', (req, res) => {
+app.get('/api/protocols', verificarAuth, (req, res) => {
 	leerJsonProtocols(CfgDbBaseDir, data => res.send(data) ); //A: devuelve un kv con el index.json de cada protocolo
 });
 
 //U: devuelve los nombres de todos los archivos dentro de un protocolo
 //curl "http://localhost:8888/api/protocols/revisarFiltros"
 //curl "http://localhost:8888/api/protocols/protocoloVacio" protocolo vacio
-app.get('/api/protocol/:protocolId', (req, res) => {
+app.get('/api/protocol/:protocolId', verificarAuth, (req, res) => {
 	var protocolId = req.params.protocolId;
 	var rutaMision = rutaCarpeta(CfgDbBaseDir, protocolId, null, null, false);
 	if (rutaMision == null){
@@ -417,7 +451,7 @@ app.get('/api/protocol/:protocolId', (req, res) => {
 
 //U: mediante GET se pide un archivo especifico de un protocolo especifico
 //curl "http://localhost:8888/api/protocols/chekearFiltros/sample.txt"
-app.get('/api/protocol/:protocolId/:file', (req, res) => {	
+app.get('/api/protocol/:protocolId/:file', verificarAuth, (req, res) => {	
 	var rutaArchivo = rutaCarpeta(CfgDbBaseDir, req.params.protocolId, null, req.params.file, false);
 	if (fs.existsSync(rutaArchivo)){ //SEC:FS:READ
 		console.log("ruta creada:  ", rutaArchivo);	
