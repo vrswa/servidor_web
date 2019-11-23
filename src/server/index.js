@@ -61,7 +61,10 @@ var verificarAuth= function (req, res, next) { //U: como autenticamos y autoriza
 	var token= req.query.tk; //U: aceptamos un hash = token en la url ejemplo para mp4
 	console.log("verificarAuth token " + token);
 	if ( isValidAuthToken(token) ) { next(); } //A: nos paso un token valido en la url, lo dejamos seguir //TODO: revisar token en un funcion salt + hash
-	else { verificarBasic(req,res,next); } //A: no nos paso token valido revisamos Header 
+	else { //A: no nos paso token valido revisamos Header 
+		console.log("verificarAuth hdr Authorization " + req.header('Authorization'));
+		verificarBasic(req,res,next); 
+	} 
 }; 
 
 function ser(o) { return JSON.stringify(o) }
