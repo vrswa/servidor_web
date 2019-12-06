@@ -20,7 +20,7 @@
     "test-nolint": "karma start ./spec/karma.conf.js --cov",
     "code-sloc": "npx sloc --details --format cli-table src/ > doc/ref/sloc.txt",
     "build": "%APPDATA%/npm/pkg --out-path x_out/exe -t node10-macos,node10-win . ",
-    "release": "echo IMPLEMENTAR",
+    "pack": "pack.sh",
     "uglify": "echo IMPLEMENTAR"
   },
   "bin": "src/server/index.js",
@@ -47,10 +47,6 @@
     "targets": [
       "node10"
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/mauriciocap/semantic_tpl.git"
   },
   "keywords": [],
   "dependencies": {
