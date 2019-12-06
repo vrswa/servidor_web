@@ -6,7 +6,7 @@
 
 //TODO: funciones asincronas name_a
 //TODO: validar y formatear json recibido?
-//TODO: algun tipo de token, no pisar archivos a lo bestia ...
+//TODO: algun tipo de token, no pisar archivos sin asegurarse que la fuente es confiable ...
 
 //----------------------------------------------------------
 //S: dependencias
@@ -65,7 +65,7 @@ var verificarAuth= function (req, res, next) { //U: como autenticamos y autoriza
 	var path= req.path;
 	var token= req.query.tk; //U: aceptamos un hash = token en la url ejemplo para mp4
 	console.log("verificarAuth path " + path + " token " + token);
-	if ( isValidAuthToken(token) ) { next(); } //A: nos paso un token valido en la url, lo dejamos seguir //TODO: revisar token en un funcion salt + hash
+	if ( isValidAuthToken(token) ) { next(); } //A: nos paso un token valido en la url, lo dejamos seguir 
 	else { //A: no nos paso token valido revisamos Header 
 		console.log("verificarAuth path " + path + " hdr Authorization " + req.header('Authorization'));
 		verificarBasic(req,res,next); 
