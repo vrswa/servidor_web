@@ -27,6 +27,7 @@ var basicAuth= require('express-basic-auth');
 
 CfgPortDflt= 8888; //U: el puerto donde escuchamos si no nos pasan PORT en el ambiente
 CfgDbBaseDir= 'DATA'; //U: los datos se guardar aqui
+CfgDbClientsFilesDir= CfgDbBaseDir + '/clients' 
 CfgDbMissionResultsBaseDir= CfgDbBaseDir + '/missions'; //U: resultados de misiones que recibimos
 CfgMissionDemoPath= _path.join(__dirname, '../../tpl/missions/xdemo');
 CfgUploadSzMax= 50 * 1024 * 1024; //U: 50MB max file(s) size 
@@ -71,6 +72,19 @@ var verificarAuth= function (req, res, next) { //U: como autenticamos y autoriza
 		verificarBasic(req,res,next); 
 	} 
 }; 
+
+var verificarHashID= function (req, res, next){ //U:Middleware si se envio hash agrega al body la ruta
+	var auth = req.get("hashId");
+	if (!auth) return res.status(401).send("Autenticacion es necesaria, fallo o no fue proporcionada");
+
+	auth = limpiarFname(auth);
+	req.body.ruta = `${CfgDbBaseDir}/clients/${auth}`;
+	//A: los archivos para el cliente estan en una carpeta con el mismo nombre que el hash
+	
+	if (!fs.existsSync(req.body.ruta)) return res.send({})
+
+	next()
+}
 
 function ser(o) { return JSON.stringify(o) }
 
@@ -485,6 +499,27 @@ app.get('/api/protocol/:protocolId/:file', verificarAuth, (req, res) => {
 	}
 });
 
+//U: devuelvo un json con los archivos que se puede descargar el cliente
+//curl -H "auth: ad123ad123asd" http://localhost:8888/api/provision
+app.get('/api/provision', verificarHashID, (req,res)=>{
+	var ruta= req.body.ruta; //A: verificarHashId me agrego la ruta al body si existe algo que devolver	
+	
+	filesAndHash(ruta, (archivos)=>{
+		res.send(archivos)
+	})
+});
+
+//U: devuelvo un archivo para el hashID que me enviaron en el header
+app.get('/api/provision/:fileName', verificarHashID, (req,res)=>{
+	var ruta= req.body.ruta; //A: verificarHashId me agrego la ruta al body si existe algo que devolver	
+	var fileName= req.params.fileName;
+	fileName= limpiarFname(fileName);
+	
+	ruta= `${ruta}/${fileName}`;
+	let reqPath = `${process.cwd()}/${ruta}`
+	if ( !fs.existsSync(reqPath) ) return res.send("not file or folder")
+	res.sendFile(reqPath);
+})
 //-----------------------------------------------------------------------------------
 //U: listen for requests 
 var listener = app.listen(process.env.PORT || CfgPortDflt, function() {
